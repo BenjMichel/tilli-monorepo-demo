@@ -9,12 +9,12 @@ Les contextes doivent réagir aux faits des autres : une commande passée ouvre 
 
 ## Décision
 
-- Les contextes communiquent uniquement par événements d'intégration asynchrones.
+- Les contextes communiquent **uniquement** par événements d'intégration asynchrones.
 - Ces événements sont définis dans `contracts/`, sous forme de schémas versionnés (`OrderPlaced.v1`). C'est le seul code partagé.
-- Chaque contexte distingue ses événements de domaine (internes, libres d'évoluer) de ses événements d'intégration (publics, stables).
-- La publication passe par un transactional outbox : l'événement est écrit dans la même transaction que l'agrégat, puis relayé. Un événement ne peut donc être ni perdu ni publié pour une écriture annulée.
-- Les consommateurs sont idempotents, avec déduplication par identifiant d'événement.
-- Chaque consommateur ne stocke que les données personnelles dont il a besoin. Dispatch ne garde pas le contact client, Fulfillment si.
+- Chaque contexte distingue ses **événements de domaine** (internes, libres d'évoluer) de ses **événements d'intégration** (publics, stables).
+- La publication passe par un **transactional outbox** : l'événement est écrit dans la même transaction que l'agrégat, puis relayé. Un événement ne peut donc être ni perdu ni publié pour une écriture annulée.
+- Les consommateurs sont **idempotents**, avec déduplication par identifiant d'événement.
+- **Minimisation des données personnelles** : chaque consommateur ne stocke que celles dont il a besoin. Dispatch ne garde pas le contact client, Fulfillment si.
 
 ## Conséquences
 

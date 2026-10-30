@@ -2,17 +2,17 @@
 
 Refonte partielle de la plateforme Tilli (retouches de vêtements à domicile par des couturiers indépendants) pour illustrer :
 
-- le DDD stratégique : sous-domaines, bounded contexts, context map
-- le DDD tactique et la Clean Architecture : agrégats, ports/adapters, inversion de dépendances
-- une stratégie de tests par couche
-- l'infrastructure as code
+- le **DDD stratégique** : sous-domaines, bounded contexts, context map
+- le **DDD tactique** et la **Clean Architecture** : agrégats, ports/adapters, inversion de dépendances
+- une **stratégie de tests** par couche
+- l'**infrastructure as code**
 
 Le dépôt ne réimplémente qu'un parcours de bout en bout :
 
-1. Sur le site, un client passe commande en 2 étapes (vêtements et retouches, puis coordonnées).
-2. Dans l'app couturier, plusieurs couturiers reçoivent la proposition de mission. Le premier qui accepte la suit jusqu'au bout.
-3. Dans l'admin, l'équipe ops suit l'avancement des commandes.
-4. L'API relie l'ensemble.
+1. Sur le **site**, un client passe commande en 2 étapes (vêtements et retouches, puis coordonnées).
+2. Dans l'**app couturier**, plusieurs couturiers reçoivent la proposition de mission. Le premier qui accepte la suit jusqu'au bout.
+3. Dans l'**admin**, l'équipe ops suit l'avancement des commandes.
+4. L'**API** relie l'ensemble.
 
 ## Pourquoi cette refonte
 

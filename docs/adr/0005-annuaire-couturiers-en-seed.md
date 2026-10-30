@@ -9,7 +9,7 @@ L'attribution a besoin de profils de couturiers : zone, compétences, disponibil
 
 ## Décision
 
-Pas de contexte « Annuaire » dans la démo. Dispatch possède localement un modèle `Candidate`, alimenté par un seed au démarrage. Fulfillment connaît seulement l'identifiant et le nom affiché de l'intervenant, reçus dans `MissionAwarded`.
+Pas de contexte « Annuaire » dans la démo. Dispatch possède localement un modèle `Candidate`, alimenté par un **seed** au démarrage. Fulfillment connaît seulement l'identifiant et le nom affiché de l'intervenant, reçus dans `MissionAwarded`.
 
 ## Conséquences
 

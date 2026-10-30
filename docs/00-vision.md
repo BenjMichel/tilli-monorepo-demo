@@ -10,7 +10,7 @@ Tilli met en relation des clients avec des couturiers indépendants qui viennent
 
 ## Ce qui différencie Tilli
 
-L'attribution : trouver vite un couturier qui a la bonne compétence (type de vêtement, matière), qui est dans la bonne zone et disponible sur un des créneaux du client. Si personne n'accepte, la commande est perdue. Si le mauvais couturier accepte, le client est déçu. C'est le core domain.
+**L'attribution** : trouver vite un couturier qui a la bonne compétence (type de vêtement, matière), qui est dans la bonne zone et disponible sur un des créneaux du client. Si personne n'accepte, la commande est perdue. Si le mauvais couturier accepte, le client est déçu. C'est le **core domain**.
 
 ## Acteurs
 

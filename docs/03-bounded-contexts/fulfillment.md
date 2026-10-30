@@ -1,10 +1,10 @@
 # Bounded context : Fulfillment (réalisation des interventions)
 
-Sous-domaine supporting. Interface : l'app couturier (« Mes interventions »).
+**Sous-domaine** : supporting · **Interface** : l'app couturier (« Mes interventions »)
 
 ## Responsabilité
 
-Accompagner le couturier une fois la mission remportée : rendez-vous, démarrage, fin. C'est le seul contexte qui donne au couturier les coordonnées du client.
+Accompagner le couturier une fois la mission remportée : rendez-vous, démarrage, fin. C'est le seul contexte qui donne au couturier les **coordonnées du client**.
 
 ## Langage ubiquitaire
 
@@ -16,7 +16,7 @@ Accompagner le couturier une fois la mission remportée : rendez-vous, démarrag
 | Contact client | `CustomerContact` | Nom, téléphone et adresse, visibles par l'intervenant uniquement |
 | Fiche de travail | `WorkSheet` | Les articles (type, matière) et les retouches à réaliser (copie locale) |
 
-Le même couturier s'appelle candidat dans Dispatch et intervenant ici, et chaque contexte a son propre modèle de lui.
+Le même couturier s'appelle **candidat** dans Dispatch et **intervenant** ici, et chaque contexte a son propre modèle de lui.
 
 ## Agrégat : `Intervention`
 
@@ -40,7 +40,7 @@ Cycle de vie : `Scheduled → AppointmentConfirmed → InProgress → Completed`
 
 | Événement | Origine | Réaction |
 |---|---|---|
-| `OrderPlaced` | Ordering | Conserve un brouillon privé (contact client, fiche de travail, créneaux) en attente d'attribution |
+| `OrderPlaced` | Ordering | Conserve un **brouillon** privé (contact client, fiche de travail, créneaux) en attente d'attribution |
 | `MissionAwarded` | Dispatch | Crée l'`Intervention` à partir du brouillon, pour l'intervenant gagnant |
 | `OrderCancelled` | Ordering | Annule l'intervention si elle n'a pas démarré |
 

@@ -35,10 +35,10 @@ flowchart LR
 
 ## Règles de dépendance
 
-- Un contexte n'importe jamais le code d'un autre contexte. Le seul code partagé est `contracts/`, qui contient les schémas versionnés des événements d'intégration.
-- Il n'y a pas de shared kernel : `Money` ou `TimeSlot` sont dupliqués si besoin, parce que la duplication coûte moins cher que le couplage.
+- Un contexte n'importe **jamais** le code d'un autre contexte. Le seul code partagé est `contracts/`, qui contient les schémas versionnés des événements d'intégration.
+- Il n'y a **pas de shared kernel** : `Money` ou `TimeSlot` sont dupliqués si besoin, parce que la duplication coûte moins cher que le couplage.
 - Les événements de domaine (internes) et les événements d'intégration (publics) sont distincts. Chaque contexte traduit les premiers en seconds.
-- La CI vérifie ces règles avec dependency-cruiser ou un outil équivalent.
+- La **CI vérifie ces règles** avec dependency-cruiser ou un outil équivalent.
 
 ## Le suivi admin est une projection
 
@@ -49,4 +49,4 @@ L'admin ne décide rien. Il affiche, pour chaque commande, une ligne qui agrège
 | #A12 | 30/10 10:02 | Attribuée (vague 2) | Marie L. | RDV confirmé 02/11 |
 | #A13 | 30/10 11:40 | ⚠️ Non pourvue | — | — |
 
-Quand l'admin agit, par exemple pour annuler une commande, il envoie une commande au contexte propriétaire (ici Ordering). Il ne modifie jamais la projection directement.
+Quand l'admin agit, par exemple pour annuler une commande, il **envoie une commande au contexte propriétaire** (ici Ordering). Il ne modifie jamais la projection directement.

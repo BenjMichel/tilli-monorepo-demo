@@ -9,7 +9,7 @@ Les trois bounded contexts pourraient chacun devenir un service. Mais la démo e
 
 ## Décision
 
-Une seule API déployable (`apps/api`) sert de composition root. Chaque contexte est un module isolé (`contexts/<nom>`) qui expose des use cases (couche application) et des handlers d'événements d'intégration.
+Une seule API déployable (`apps/api`) sert de **composition root**. Chaque contexte est un module isolé (`contexts/<nom>`) qui expose des use cases (couche application) et des handlers d'événements d'intégration.
 
 L'isolation repose sur trois mécanismes :
 

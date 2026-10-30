@@ -7,13 +7,13 @@
 
 L'attribution et la réalisation concernent toutes les deux le couturier, et l'app couturier les affiche côte à côte. On pourrait donc les fusionner en un seul contexte « Missions ».
 
-Dans le système actuel, une mission est proposée à plusieurs couturiers en même temps, par tentatives successives qui élargissent le cercle (`algoTryNumber`). Le premier qui accepte l'emporte.
+Dans le système actuel, une mission est proposée à **plusieurs couturiers en même temps**, par tentatives successives qui élargissent le cercle (`algoTryNumber`). Le premier qui accepte l'emporte.
 
 ## Décision
 
-Dispatch et Fulfillment sont deux contextes distincts. Dispatch est le core domain (sélection, vagues, concurrence), et son modèle doit pouvoir évoluer vite, par exemple avec un nouveau scoring ou de nouvelles règles d'éligibilité, sans risque pour la réalisation. Fulfillment est un supporting domain linéaire qui manipule des données personnelles que Dispatch n'a pas à voir.
+Dispatch et Fulfillment sont **deux contextes distincts**. **Dispatch** est le core domain (sélection, vagues, concurrence), et son modèle doit pouvoir évoluer vite, par exemple avec un nouveau scoring ou de nouvelles règles d'éligibilité, sans risque pour la réalisation. **Fulfillment** est un supporting domain linéaire qui manipule des données personnelles que Dispatch n'a pas à voir.
 
-Les propositions partent en parallèle, par vagues. L'agrégat `Mission` contient la vague active et ses propositions. La règle « premier qui accepte gagne » est un invariant de l'agrégat, protégé par un verrouillage optimiste.
+**Les propositions partent en parallèle, par vagues.** L'agrégat `Mission` contient la vague active et ses propositions. La règle « premier qui accepte gagne » est un invariant de l'agrégat, protégé par un verrouillage optimiste.
 
 ## Conséquences
 

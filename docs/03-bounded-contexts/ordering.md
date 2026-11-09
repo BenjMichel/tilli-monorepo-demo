@@ -71,6 +71,6 @@ Les méthodes correspondantes existent sur `Order` (`recordInterventionStarted`,
 | 1. Vêtements et retouches | `GetQuote` | Liste les retouches proposées pour un vêtement et sa matière, puis calcule le devis de la sélection |
 | 2. Coordonnées | `PlaceOrder` | Vérifie la zone, les créneaux et le client, puis crée la commande au prix du devis |
 
-Le client doit payer **le prix affiché à l'étape 1**. `PlaceOrder` reçoit donc la version de grille du devis : si la grille a changé entre les deux étapes, la commande est refusée (`QuoteOutdated`) et le funnel doit recalculer le devis.
+Le client paie **le prix affiché à l'étape 1**. `PlaceOrder` reçoit la version de grille du devis et calcule la commande **avec cette version**, même si une nouvelle grille a été publiée entre les deux étapes. La commande stocke ce numéro de version. Les grilles ne sont donc jamais supprimées : `PriceGrids` les garde toutes, la dernière étant la grille courante des nouveaux devis.
 
 L'annulation peut se produire en même temps que le démarrage de l'intervention. Le verrouillage optimiste sur `Order` tranche : si le démarrage est enregistré en premier, l'annulation est **refusée**.

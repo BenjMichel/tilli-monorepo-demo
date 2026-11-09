@@ -14,8 +14,12 @@ export type PlaceOrderCommand = {
   readonly quotedPriceGridVersion: string;
 };
 
-export class QuoteOutdated extends OrderingError {
-  readonly code = 'QUOTE_OUTDATED';
+export class UnknownPriceGridVersion extends OrderingError {
+  readonly code = 'UNKNOWN_PRICE_GRID_VERSION';
+
+  constructor(version: string) {
+    super(`No price grid with version ${version}`);
+  }
 }
 
 /** Funnel step 2: the customer's details turn the quote into an order. */
@@ -29,11 +33,9 @@ export class PlaceOrder {
   ) {}
 
   async execute(command: PlaceOrderCommand): Promise<{ orderId: OrderId; totalCents: number }> {
-    const grid = this.grids.current();
-    // The customer must pay what step 1 showed: a grid change in between means quoting again.
-    if (grid.version !== command.quotedPriceGridVersion) {
-      throw new QuoteOutdated(`Prices changed since the quote (grid ${grid.version})`);
-    }
+    // The customer pays what step 1 showed, even if a new grid was published in between.
+    const grid = this.grids.byVersion(command.quotedPriceGridVersion);
+    if (!grid) throw new UnknownPriceGridVersion(command.quotedPriceGridVersion);
     const order = Order.place({
       id: OrderId(this.ids.next()),
       items: command.items,

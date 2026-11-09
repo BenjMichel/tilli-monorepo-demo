@@ -36,6 +36,7 @@ Dans le système d'origine, une seule entité `Order` porte plus de 40 états : 
 | Dossier | Contenu |
 |---|---|
 | `apps/site` | **Site** client (Vite, React) : le funnel de commande en 2 étapes, qui ne parle qu'à l'API |
+| `apps/admin` | **Admin** ops (Vite, React) : suivi des commandes et annulation, via l'API |
 | `apps/api` | **Composition root** et API HTTP : branche les contextes sur le bus, vide les outbox, projection « Suivi admin » |
 | `infra` | **Infrastructure as code** (OpenTofu) : Cloud Run, Artifact Registry, identité GitHub sans clé |
 | `contexts/ordering` | Bounded context **Ordering** : grille tarifaire, devis, agrégat `Order` |
@@ -138,3 +139,21 @@ Le site s'ouvre sur `http://localhost:5173` et joint l'API par `/api`, que Vite 
 | Confirmation | Numéro de commande et prix figé | |
 
 Le prix affiché vient toujours du devis de l'API : le site ne calcule rien. Ses tests (Vitest, Testing Library) parcourent le funnel complet contre une fausse API.
+
+## L'admin
+
+L'API étant lancée :
+
+```bash
+pnpm --filter @tilli/admin dev
+```
+
+L'admin s'ouvre sur `http://localhost:5174` et joint l'API par `/api`, comme le site. Il n'a aucune logique métier ([context map](docs/04-context-map.md#le-suivi-admin-est-une-projection)) :
+
+| Besoin des ops | Ce que fait l'admin | Appels |
+|---|---|---|
+| Voir où en est chaque commande | Tableau rafraîchi toutes les 5 s : statut, couturier, rendez-vous, prix | `GET /admin/orders` (projection) |
+| Repérer les blocages | Bandeau et commandes **non pourvues** en tête de liste, filtres par statut | |
+| Annuler | Motif obligatoire, puis commande envoyée à Ordering, qui peut refuser si l'intervention a démarré | `POST /orders/:id/cancel` |
+
+Le bouton « Annuler » n'est qu'un indice tiré de la projection : c'est Ordering qui tranche, et l'admin explique son refus.

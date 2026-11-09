@@ -28,7 +28,7 @@ Tranché : le devis est un **calcul déterministe** à partir d'une grille tarif
 | Policy : quand **CommandePassée** | *Ouvrir une mission* | MissionOuverte | Une mission par commande |
 | Policy : quand **MissionOuverte** ou **VagueExpirée** | *Lancer une vague de propositions* | VagueLancée, PropositionEnvoyée (×N) | Candidats éligibles : zone, compétences, disponibilité, pas déjà sollicités |
 | Couturier | *Décliner* | PropositionDéclinée | — |
-| Couturier | *Accepter* | **MissionAttribuée** | **Une seule acceptation possible** ; les autres propositions sont retirées |
+| Couturier | *Accepter et choisir le rendez-vous* | **MissionAttribuée** | **Une seule acceptation possible** ; les autres propositions sont retirées. Le rendez-vous dure **30 min**, tient dans un créneau du client, et est **définitif** |
 | Système (délai) | — | VagueExpirée | Aucune acceptation dans le délai imparti |
 | Policy : quand le nombre max de vagues est atteint | — | **MissionNonPourvue** | Escalade vers les ops |
 
@@ -41,7 +41,6 @@ Tranché : quand deux couturiers acceptent à la même seconde, **le premier obt
 | Acteur | Commande | Événement | Règles |
 |---|---|---|---|
 | Policy : quand **MissionAttribuée** | *Créer l'intervention* | InterventionCréée | — |
-| Couturier | *Confirmer le rendez-vous* | RendezVousConfirmé | Le créneau fait partie de ceux proposés par le client |
 | Couturier | *Démarrer* | InterventionDémarrée | Uniquement à partir de l'heure du rendez-vous |
 | Couturier | *Terminer* | **InterventionTerminée** | — |
 

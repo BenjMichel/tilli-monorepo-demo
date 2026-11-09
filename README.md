@@ -36,6 +36,7 @@ Dans le système d'origine, une seule entité `Order` porte plus de 40 états : 
 | Dossier | Contenu |
 |---|---|
 | `apps/api` | **Composition root** et API HTTP : branche les contextes sur le bus, vide les outbox, projection « Suivi admin » |
+| `infra` | **Infrastructure as code** (OpenTofu) : Cloud Run, Artifact Registry, identité GitHub sans clé |
 | `contexts/ordering` | Bounded context **Ordering** : grille tarifaire, devis, agrégat `Order` |
 | `contexts/dispatch` | Bounded context **Dispatch** (core domain) : domaine, application, infrastructure |
 | `contexts/fulfillment` | Bounded context **Fulfillment** : agrégat `Intervention`, seul contexte qui voit les coordonnées du client |
@@ -58,6 +59,32 @@ pnpm verify
 | Types | `pnpm typecheck` | tsc |
 | Architecture | `pnpm check:architecture` | dependency-cruiser : isolation des contextes, domaine pur, pas de cycle |
 | Tests | `pnpm test` | Vitest |
+
+## Conteneur et infrastructure
+
+L'API est compilée en un seul fichier JavaScript (esbuild) et embarquée dans une image **distroless** non root :
+
+```bash
+docker build -t tilli-api .
+docker run -p 8080:8080 tilli-api
+```
+
+`infra/` décrit l'environnement GCP en **OpenTofu** ([ADR 0006](docs/adr/0006-infrastructure-cloud-run-opentofu.md)) :
+
+| Élément | Rôle |
+|---|---|
+| `modules/cloud-run-service` | Service Cloud Run avec sa propre identité, sondes `/health`, accès public optionnel |
+| `modules/github-deployer` | Workload Identity Federation : seul `main` de ce dépôt obtient des identifiants, sans clé stockée ; droits limités à une ressource chacun |
+| `envs/demo` | Environnement de démo à Paris (`europe-west9`) : **une seule instance**, car l'état est en mémoire |
+
+Rien n'est déployé : la CI valide la configuration, la **teste avec `tofu test` sur un provider simulé** (aucun identifiant nécessaire), puis la passe à tflint et à trivy. Pour un vrai déploiement, il faudrait un projet GCP, un bucket pour l'état, et :
+
+```bash
+cd infra/envs/demo
+cp terraform.tfvars.example terraform.tfvars   # puis renseigner project_id et api_image
+tofu init -backend-config="bucket=<bucket-d-etat>"
+tofu plan
+```
 
 ## Lancer l'API
 

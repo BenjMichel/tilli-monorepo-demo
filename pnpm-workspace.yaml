@@ -3,3 +3,6 @@ packages:
   - "apps/*"
   - "packages/*"
   - "tests/*"
+allowBuilds:
+  # tsx works with the prebuilt esbuild binary: no install script needed.
+  esbuild: false

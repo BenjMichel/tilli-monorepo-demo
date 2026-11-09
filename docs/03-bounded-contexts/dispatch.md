@@ -107,6 +107,21 @@ Comme c'est le cœur du métier, la sélection est une **policy interchangeable*
 | `OrderPlaced` | Ordering | Ouvre une `Mission` et ne conserve que les exigences : zone, créneaux, et compétences **déduites des types de vêtements et des matières** (une matière habillée demande un couturier qui maîtrise ce tissu). Les coordonnées du client ne sont **pas** conservées |
 | `OrderCancelled` | Ordering | Clôt la mission et retire les propositions |
 
+L'**ACL** (`OrderingAcl`) valide chaque événement reçu avec le schéma de `contracts/`, puis le traduit. Le code postal devient un point géographique via le port `AreaLocator` (une table de centroïdes pour la démo, une API de géocodage plus tard). Une commande hors zone connue est **refusée**. L'identifiant de mission est dérivé de celui de la commande, si bien qu'un `OrderPlaced` livré deux fois n'ouvre **qu'une seule** mission.
+
+## Relais de l'outbox
+
+`DispatchEventRelay` lit l'outbox et traite chaque événement de domaine. Un événement n'est marqué « traité » qu'après succès, donc un échec est rejoué.
+
+| Événement de domaine | Réaction |
+|---|---|
+| `MissionOpened`, `OfferDeclined`, `OfferWaveExpired` | `LaunchNextWave` (sans effet si des propositions sont encore en attente) |
+| `OfferWaveLaunched` | Programme l'expiration de la vague (`WaveTimer`) |
+| `MissionAwarded`, `MissionUnstaffed` | Publie l'événement d'intégration v1 correspondant |
+| `MissionClosed` | Rien pour l'instant |
+
+Le timer d'une vague ancienne peut se déclencher après le lancement d'une vague plus récente, quand toute la première vague a décliné. `ExpireWave` compare alors le numéro de vague et **ignore** l'appel.
+
 ## Hors périmètre de la démo
 
 Relances (le système réel relance au bout de 2h), favoris, blacklist, niveau junior/senior, objectifs par couturier. Toutes ces règles s'ajouteraient dans `CandidateSelectionPolicy`.

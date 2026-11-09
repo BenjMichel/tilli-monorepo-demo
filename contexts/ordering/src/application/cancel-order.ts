@@ -1,5 +1,6 @@
 import type { OrderId } from '../domain/order';
-import { OrderConcurrencyConflict, type OrderRepository } from '../domain/order-repository';
+import type { OrderRepository } from '../domain/order-repository';
+import { retryOnConflict } from './retry-on-conflict';
 
 /**
  * Cancellation races with the tailor starting the intervention: on a version conflict
@@ -11,17 +12,11 @@ export class CancelOrder {
     private readonly maxAttempts = 3,
   ) {}
 
-  async execute(command: { orderId: OrderId; reason: string }): Promise<void> {
-    for (let attempt = 1; ; attempt++) {
+  execute(command: { orderId: OrderId; reason: string }): Promise<void> {
+    return retryOnConflict(this.maxAttempts, async () => {
       const order = await this.orders.get(command.orderId);
       order.cancel(command.reason);
-      try {
-        await this.orders.save(order);
-        return;
-      } catch (error) {
-        if (error instanceof OrderConcurrencyConflict && attempt < this.maxAttempts) continue;
-        throw error;
-      }
-    }
+      await this.orders.save(order);
+    });
   }
 }

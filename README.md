@@ -28,3 +28,19 @@ Dans le système d'origine, une seule entité `Order` porte plus de 40 états : 
 | Bounded contexts | [Ordering](docs/03-bounded-contexts/ordering.md) · [Dispatch](docs/03-bounded-contexts/dispatch.md) · [Fulfillment](docs/03-bounded-contexts/fulfillment.md) |
 | Context map | [docs/04-context-map.md](docs/04-context-map.md) |
 | Décisions | [docs/adr/](docs/adr/) |
+
+## Structure et commandes
+
+| Dossier | Contenu |
+|---|---|
+| `contexts/dispatch` | Bounded context **Dispatch** (core domain) : domaine, application, infrastructure |
+| `packages/contracts` | **Published language** : schémas versionnés des événements d'intégration, seul code partagé entre contextes |
+| `packages/event-bus` | Bus d'événements en mémoire pour le monolithe modulaire |
+
+Prérequis : Node 24 et pnpm.
+
+```bash
+pnpm install
+pnpm test
+pnpm typecheck
+```

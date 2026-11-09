@@ -8,3 +8,6 @@ export type CandidateId = Brand<string, 'CandidateId'>;
 export const MissionId = (value: string): MissionId => value as MissionId;
 export const OrderId = (value: string): OrderId => value as OrderId;
 export const CandidateId = (value: string): CandidateId => value as CandidateId;
+
+/** One mission per order: deriving the id makes a redelivered OrderPlaced harmless. */
+export const missionIdForOrder = (orderId: OrderId): MissionId => MissionId(`mission-${orderId}`);

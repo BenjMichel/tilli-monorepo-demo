@@ -5,6 +5,8 @@ export interface MissionRepository {
   /** Throws MissionNotFound when no mission has this id. */
   get(id: MissionId): Promise<Mission>;
 
+  exists(id: MissionId): Promise<boolean>;
+
   /**
    * Persists the mission together with its pending events (outbox).
    * Throws MissionConcurrencyConflict when the stored version moved since the mission was loaded.

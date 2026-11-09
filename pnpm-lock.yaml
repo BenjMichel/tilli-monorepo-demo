@@ -24,6 +24,22 @@ importers:
         specifier: ^5.0.5
         version: 5.0.5(vite@8.3.5)
 
+  contexts/ordering:
+    dependencies:
+      '@tilli/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+    devDependencies:
+      '@tilli/event-bus':
+        specifier: workspace:*
+        version: link:../../packages/event-bus
+      typescript:
+        specifier: ^7.0.2
+        version: 7.0.2
+      vitest:
+        specifier: ^5.1.0
+        version: 5.1.0(vite@8.3.5)
+
   packages/contracts:
     dependencies:
       zod:

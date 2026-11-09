@@ -35,6 +35,7 @@ Dans le système d'origine, une seule entité `Order` porte plus de 40 états : 
 
 | Dossier | Contenu |
 |---|---|
+| `apps/site` | **Site** client (Vite, React) : le funnel de commande en 2 étapes, qui ne parle qu'à l'API |
 | `apps/api` | **Composition root** et API HTTP : branche les contextes sur le bus, vide les outbox, projection « Suivi admin » |
 | `infra` | **Infrastructure as code** (OpenTofu) : Cloud Run, Artifact Registry, identité GitHub sans clé |
 | `contexts/ordering` | Bounded context **Ordering** : grille tarifaire, devis, agrégat `Order` |
@@ -119,3 +120,21 @@ curl -s -X POST localhost:3000/orders -H 'content-type: application/json' -d '{
 }'
 curl -s localhost:3000/tailors/marie/offers
 ```
+
+## Le site
+
+Dans un second terminal, l'API étant lancée :
+
+```bash
+pnpm --filter @tilli/site dev
+```
+
+Le site s'ouvre sur `http://localhost:5173` et joint l'API par `/api`, que Vite relaie vers `http://127.0.0.1:3000` (variable `API_URL` pour en changer). Il ne connaît que les routes HTTP, jamais le code d'un contexte :
+
+| Étape | Ce que voit le client | Appels |
+|---|---|---|
+| 1. Vêtements et retouches | Vêtement, matière, retouches avec leur prix ; panier et total recalculés à chaque ajout | `GET /catalog/alterations`, `POST /quotes` |
+| 2. Coordonnées | Adresse, créneaux de 2 h sur 7 jours, coordonnées | `POST /orders` avec la version de grille du devis |
+| Confirmation | Numéro de commande et prix figé | |
+
+Le prix affiché vient toujours du devis de l'API : le site ne calcule rien. Ses tests (Vitest, Testing Library) parcourent le funnel complet contre une fausse API.

@@ -1,0 +1,3 @@
+# Copy to terraform.tfvars (ignored by Git) before a real plan.
+project_id = "my-gcp-project"
+api_image  = "europe-west9-docker.pkg.dev/my-gcp-project/tilli/api@sha256:0000000000000000000000000000000000000000000000000000000000000000"

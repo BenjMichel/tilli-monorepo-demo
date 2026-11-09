@@ -1,13 +1,13 @@
 import { IntegrationEvent, OrderCancelledV1, OrderPlacedV1 } from '@tilli/contracts';
 import { InMemoryEventBus } from '@tilli/event-bus';
 import { describe, expect, it } from 'vitest';
-import { QuoteOutdated } from '../../src/application/place-order';
+import { UnknownPriceGridVersion } from '../../src/application/place-order';
 import { OrderCannotBeCancelled } from '../../src/domain/errors';
 import { Money } from '../../src/domain/money';
 import { PriceGrid } from '../../src/domain/price-grid';
 import {
   DEMO_PRICE_GRID,
-  FixedPriceGrids,
+  InMemoryPriceGrids,
   InMemoryOrderRepository,
   OrderId,
   PARIS_SERVICE_AREA,
@@ -15,13 +15,13 @@ import {
 } from '../../src';
 import { DRESSY_PANTS_HEM, LEA, MONDAY_MORNING, NOW, PARIS_11_ADDRESS } from '../fixtures';
 
-function aRunningOrdering(grid: PriceGrid = DEMO_PRICE_GRID) {
+function aRunningOrdering(grids: PriceGrid[] = [DEMO_PRICE_GRID]) {
   let sequence = 0;
   const bus = new InMemoryEventBus();
   const orders = new InMemoryOrderRepository({ now: () => NOW });
   const ordering = createOrderingModule({
     orders,
-    grids: new FixedPriceGrids(grid),
+    grids: new InMemoryPriceGrids(grids),
     serviceArea: PARIS_SERVICE_AREA,
     ids: { next: () => `o-${++sequence}` },
     clock: { now: () => NOW },
@@ -59,11 +59,31 @@ describe('Ordering funnel', () => {
     });
   });
 
-  it('asks for a new quote when the grid changed between the two steps', async () => {
+  it('keeps the prices of the quote when a new grid is published between the two steps', async () => {
     const newGrid = new PriceGrid('demo-2027-01', [
       { garmentType: 'pants', alteration: { code: 'hem-simple', label: 'Ourlet simple (x2)' }, prices: { basic: Money(1300), dressy: Money(1800) } },
     ]);
-    const { bus, ordering } = aRunningOrdering(newGrid);
+    const { bus, ordering } = aRunningOrdering([DEMO_PRICE_GRID, newGrid]);
+    expect(ordering.queries.getQuote.execute([DRESSY_PANTS_HEM]).total).toEqual(Money(1800));
+
+    const placed = await ordering.commands.placeOrder.execute({
+      items: [DRESSY_PANTS_HEM],
+      address: PARIS_11_ADDRESS,
+      slots: [MONDAY_MORNING],
+      customer: LEA,
+      quotedPriceGridVersion: DEMO_PRICE_GRID.version,
+    });
+    await ordering.relay.run();
+
+    expect(placed.totalCents).toBe(1700);
+    expect(OrderPlacedV1.parse(bus.published[0]).payload).toMatchObject({
+      totalCents: 1700,
+      priceGridVersion: DEMO_PRICE_GRID.version,
+    });
+  });
+
+  it('refuses a quote made with an unknown grid version', async () => {
+    const { bus, ordering } = aRunningOrdering();
 
     await expect(
       ordering.commands.placeOrder.execute({
@@ -71,9 +91,9 @@ describe('Ordering funnel', () => {
         address: PARIS_11_ADDRESS,
         slots: [MONDAY_MORNING],
         customer: LEA,
-        quotedPriceGridVersion: DEMO_PRICE_GRID.version,
+        quotedPriceGridVersion: 'made-up',
       }),
-    ).rejects.toThrow(QuoteOutdated);
+    ).rejects.toThrow(UnknownPriceGridVersion);
     expect(bus.published).toEqual([]);
   });
 

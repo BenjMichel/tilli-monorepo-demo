@@ -11,8 +11,11 @@ export interface OrderIdGenerator {
 }
 
 export interface PriceGrids {
-  /** The grid quotes and new orders are priced with. */
+  /** The grid new quotes are computed with. */
   current(): PriceGrid;
+
+  /** Grids are never deleted: an order is priced with the version its quote used. */
+  byVersion(version: string): PriceGrid | null;
 }
 
 export type OutboxEntry = {

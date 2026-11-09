@@ -11,7 +11,7 @@ import {
 import { InMemoryEventBus } from '@tilli/event-bus';
 import {
   DEMO_PRICE_GRID,
-  FixedPriceGrids,
+  InMemoryPriceGrids,
   InMemoryOrderRepository,
   PARIS_SERVICE_AREA,
   createOrderingModule,
@@ -41,7 +41,7 @@ function aRunningPlatform() {
   const missions = new InMemoryMissionRepository(clock);
   const ordering = createOrderingModule({
     orders: new InMemoryOrderRepository(clock),
-    grids: new FixedPriceGrids(),
+    grids: new InMemoryPriceGrids(),
     serviceArea: PARIS_SERVICE_AREA,
     ids: { next: () => 'o-1' },
     clock,

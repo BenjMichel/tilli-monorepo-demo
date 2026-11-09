@@ -29,10 +29,23 @@ export const DEMO_PRICE_GRID = new PriceGrid('demo-2026-11', [
   entry('dress', 'zip-short', 'Zip court (< 25 cm) fourni par le Tilliste', 22, 24),
 ]);
 
-export class FixedPriceGrids implements PriceGrids {
-  constructor(private readonly grid: PriceGrid = DEMO_PRICE_GRID) {}
+/** Every grid ever published, the last one being current. */
+export class InMemoryPriceGrids implements PriceGrids {
+  private readonly byVersions: ReadonlyMap<string, PriceGrid>;
+  private readonly latest: PriceGrid;
+
+  constructor(grids: readonly PriceGrid[] = [DEMO_PRICE_GRID]) {
+    const latest = grids.at(-1);
+    if (!latest) throw new RangeError('At least one price grid is required');
+    this.latest = latest;
+    this.byVersions = new Map(grids.map((grid) => [grid.version, grid]));
+  }
 
   current(): PriceGrid {
-    return this.grid;
+    return this.latest;
+  }
+
+  byVersion(version: string): PriceGrid | null {
+    return this.byVersions.get(version) ?? null;
   }
 }

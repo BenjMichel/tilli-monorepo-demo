@@ -10,6 +10,7 @@ import {
 } from './errors';
 import type { CandidateId, MissionId, OrderId } from './ids';
 import type { MissionEvent } from './mission-events';
+import { copyRequirements, type MissionRequirements } from './mission-requirements';
 
 export type MissionStatus = 'open' | 'offering' | 'awarded' | 'unstaffed' | 'closed';
 export type OfferStatus = 'pending' | 'accepted' | 'declined' | 'withdrawn' | 'expired';
@@ -28,6 +29,7 @@ export type OfferWave = {
 export type MissionSnapshot = {
   readonly id: MissionId;
   readonly orderId: OrderId;
+  readonly requirements: MissionRequirements;
   readonly maxWaves: number;
   status: MissionStatus;
   waves: OfferWave[];
@@ -45,13 +47,19 @@ export class Mission {
 
   private constructor(private readonly state: MissionSnapshot) {}
 
-  static open(params: { id: MissionId; orderId: OrderId; maxWaves: number }): Mission {
+  static open(params: {
+    id: MissionId;
+    orderId: OrderId;
+    requirements: MissionRequirements;
+    maxWaves: number;
+  }): Mission {
     if (!Number.isInteger(params.maxWaves) || params.maxWaves < 1) {
       throw new RangeError(`maxWaves must be a positive integer, got ${params.maxWaves}`);
     }
     const mission = new Mission({
       id: params.id,
       orderId: params.orderId,
+      requirements: copyRequirements(params.requirements),
       maxWaves: params.maxWaves,
       status: 'open',
       waves: [],
@@ -89,6 +97,18 @@ export class Mission {
 
   get offers(): readonly Readonly<Offer>[] {
     return this.state.offers;
+  }
+
+  get requirements(): MissionRequirements {
+    return this.state.requirements;
+  }
+
+  get waveCount(): number {
+    return this.state.waves.length;
+  }
+
+  get solicitedCandidateIds(): ReadonlySet<CandidateId> {
+    return new Set(this.state.offers.map((offer) => offer.candidateId));
   }
 
   /** True when the current wave has no pending offer left and another wave is allowed. */
@@ -174,6 +194,13 @@ export class Mission {
     this.markUnstaffedIfExhausted();
   }
 
+  /** Nobody eligible is left to solicit: there is no point waiting for the remaining waves. */
+  declareUnstaffed(): void {
+    this.assertActive();
+    if (this.pendingOffers().length > 0) throw new WaveStillActive(this.state.id);
+    this.markUnstaffed();
+  }
+
   /** The order was cancelled. Once the mission is settled, Dispatch has nothing left to close. */
   close(): void {
     if (this.state.status !== 'open' && this.state.status !== 'offering') return;
@@ -199,6 +226,10 @@ export class Mission {
 
   private markUnstaffedIfExhausted(): void {
     if (this.pendingOffers().length > 0 || this.state.waves.length < this.state.maxWaves) return;
+    this.markUnstaffed();
+  }
+
+  private markUnstaffed(): void {
     this.state.status = 'unstaffed';
     this.record({
       type: 'MissionUnstaffed',
@@ -237,6 +268,7 @@ export class Mission {
 function copyOf(snapshot: MissionSnapshot): MissionSnapshot {
   return {
     ...snapshot,
+    requirements: copyRequirements(snapshot.requirements),
     waves: snapshot.waves.map((wave) => ({ ...wave, expiresAt: new Date(wave.expiresAt) })),
     offers: snapshot.offers.map((offer) => ({ ...offer })),
   };

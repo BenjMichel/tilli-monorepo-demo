@@ -1,5 +1,7 @@
 # Tilli : monorepo de démonstration
 
+[![CI](https://github.com/BenjMichel/tilli-monorepo-demo/actions/workflows/ci.yml/badge.svg)](https://github.com/BenjMichel/tilli-monorepo-demo/actions/workflows/ci.yml)
+
 Refonte partielle de la plateforme Tilli (retouches de vêtements à domicile par des couturiers indépendants) pour illustrer :
 
 - le **DDD stratégique** : sous-domaines, bounded contexts, context map
@@ -41,13 +43,21 @@ Dans le système d'origine, une seule entité `Order` porte plus de 40 états : 
 | `packages/contracts` | **Published language** : schémas versionnés des événements d'intégration, seul code partagé entre contextes |
 | `packages/event-bus` | Bus d'événements en mémoire pour le monolithe modulaire |
 
-Prérequis : Node 24 et pnpm.
+Prérequis : Node 24 et pnpm 12.
 
 ```bash
 pnpm install
-pnpm test
-pnpm typecheck
+pnpm verify
 ```
+
+`pnpm verify` enchaîne les mêmes vérifications que la CI :
+
+| Étape | Commande | Outil |
+|---|---|---|
+| Lint et format | `pnpm lint` (`pnpm lint:fix` pour corriger) | Biome |
+| Types | `pnpm typecheck` | tsc |
+| Architecture | `pnpm check:architecture` | dependency-cruiser : isolation des contextes, domaine pur, pas de cycle |
+| Tests | `pnpm test` | Vitest |
 
 ## Lancer l'API
 

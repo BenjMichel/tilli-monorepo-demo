@@ -81,11 +81,17 @@ sequenceDiagram
 
 `CandidateSelectionPolicy` produit la liste ordonnée des candidats d'une vague, en trois temps :
 
-1. **Filtrer** : dans la zone, avec les compétences requises, disponible sur au moins un créneau, pas encore sollicité.
-2. **Noter** : distance, adéquation des créneaux, équité de répartition.
-3. **Dimensionner la vague** : les N meilleurs, N croissant d'une vague à l'autre (par exemple 3, puis 5, puis tous les éligibles).
+1. **Filtrer** : le rayon d'intervention du couturier couvre le quartier de la mission, il maîtrise **tous** les types de vêtements et **toutes** les matières demandés, il est disponible sur au moins un créneau complet du client, et il n'a pas encore été sollicité.
+2. **Classer**, par ordre de priorité :
+   1. le plus de créneaux du client couverts ;
+   2. le plus proche ;
+   3. le moins de missions récentes (**équité** de répartition) ;
+   4. l'identifiant, pour qu'une vague soit **reproductible**.
+3. **Dimensionner la vague** : les N premiers, N croissant d'une vague à l'autre (3, puis 5, puis tous les éligibles). Le nombre de tailles configurées donne le nombre maximum de vagues d'une mission.
 
-Comme c'est le cœur du métier, la sélection est une **policy interchangeable**, testée unitairement et séparément de l'agrégat.
+Si plus **aucun candidat n'est éligible**, la mission passe à « non pourvue » sans attendre les vagues restantes.
+
+Comme c'est le cœur du métier, la sélection est une **policy interchangeable**, testée unitairement et séparément de l'agrégat. Le use case `LaunchNextWave` l'appelle à l'ouverture de la mission, à l'expiration d'une vague et quand toute une vague a décliné.
 
 ## Événements publiés
 

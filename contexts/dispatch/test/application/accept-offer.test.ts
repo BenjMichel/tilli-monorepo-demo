@@ -4,6 +4,7 @@ import type { Clock } from '../../src/application/clock';
 import { MissionAlreadyAwarded } from '../../src/domain/errors';
 import { CandidateId, MissionId, OrderId } from '../../src/domain/ids';
 import { Mission } from '../../src/domain/mission';
+import { someRequirements } from '../fixtures';
 import { MissionConcurrencyConflict, type MissionRepository } from '../../src/domain/mission-repository';
 import { InMemoryMissionRepository } from '../../src/infrastructure/in-memory-mission-repository';
 
@@ -16,7 +17,7 @@ const bob = CandidateId('bob');
 
 async function aRepositoryWithAMissionOfferedTo(candidates: CandidateId[]) {
   const repository = new InMemoryMissionRepository();
-  const mission = Mission.open({ id: missionId, orderId: OrderId('o-1'), maxWaves: 3 });
+  const mission = Mission.open({ id: missionId, orderId: OrderId('o-1'), requirements: someRequirements(), maxWaves: 3 });
   mission.launchWave(candidates, new Date(T0.getTime() + 30 * 60_000), T0);
   await repository.save(mission);
   repository.outbox.length = 0;

@@ -11,6 +11,7 @@ import {
 } from '../../src/domain/errors';
 import { CandidateId, MissionId, OrderId } from '../../src/domain/ids';
 import { Mission } from '../../src/domain/mission';
+import { someRequirements } from '../fixtures';
 
 const T0 = new Date('2026-11-02T09:00:00Z');
 const minutesAfterT0 = (minutes: number) => new Date(T0.getTime() + minutes * 60_000);
@@ -22,7 +23,7 @@ const carol = CandidateId('carol');
 const dave = CandidateId('dave');
 
 function anOpenMission(maxWaves = 3): Mission {
-  const mission = Mission.open({ id: MissionId('m-1'), orderId: OrderId('o-1'), maxWaves });
+  const mission = Mission.open({ id: MissionId('m-1'), orderId: OrderId('o-1'), requirements: someRequirements(), maxWaves });
   mission.pullEvents();
   return mission;
 }
@@ -40,7 +41,7 @@ const statusOf = (mission: Mission, candidateId: CandidateId) =>
 describe('Mission', () => {
   describe('opening', () => {
     it('starts open, without any offer', () => {
-      const mission = Mission.open({ id: MissionId('m-1'), orderId: OrderId('o-1'), maxWaves: 3 });
+      const mission = Mission.open({ id: MissionId('m-1'), orderId: OrderId('o-1'), requirements: someRequirements(), maxWaves: 3 });
 
       expect(mission.status).toBe('open');
       expect(mission.offers).toEqual([]);
@@ -48,7 +49,7 @@ describe('Mission', () => {
     });
 
     it('requires at least one wave', () => {
-      expect(() => Mission.open({ id: MissionId('m-1'), orderId: OrderId('o-1'), maxWaves: 0 })).toThrow(RangeError);
+      expect(() => Mission.open({ id: MissionId('m-1'), orderId: OrderId('o-1'), requirements: someRequirements(), maxWaves: 0 })).toThrow(RangeError);
     });
   });
 
@@ -221,6 +222,27 @@ describe('Mission', () => {
 
       expect(mission.status).toBe('awarded');
       expect(mission.pullEvents()).toEqual([]);
+    });
+  });
+
+  describe('declaring the mission unstaffed when nobody is left to solicit', () => {
+    it('gives up before the last wave', () => {
+      const mission = aMissionOfferedTo([alice], 3);
+      mission.decline(alice);
+      mission.pullEvents();
+
+      mission.declareUnstaffed();
+
+      expect(mission.status).toBe('unstaffed');
+      expect(mission.pullEvents()).toEqual([
+        { type: 'MissionUnstaffed', missionId: 'm-1', orderId: 'o-1', waves: 1 },
+      ]);
+    });
+
+    it('waits for the pending offers of the current wave', () => {
+      const mission = aMissionOfferedTo([alice]);
+
+      expect(() => mission.declareUnstaffed()).toThrow(WaveStillActive);
     });
   });
 

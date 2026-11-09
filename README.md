@@ -33,6 +33,7 @@ Dans le système d'origine, une seule entité `Order` porte plus de 40 états : 
 
 | Dossier | Contenu |
 |---|---|
+| `apps/api` | **Composition root** et API HTTP : branche les contextes sur le bus, vide les outbox, projection « Suivi admin » |
 | `contexts/ordering` | Bounded context **Ordering** : grille tarifaire, devis, agrégat `Order` |
 | `contexts/dispatch` | Bounded context **Dispatch** (core domain) : domaine, application, infrastructure |
 | `contexts/fulfillment` | Bounded context **Fulfillment** : agrégat `Intervention`, seul contexte qui voit les coordonnées du client |
@@ -46,4 +47,38 @@ Prérequis : Node 24 et pnpm.
 pnpm install
 pnpm test
 pnpm typecheck
+```
+
+## Lancer l'API
+
+```bash
+pnpm --filter @tilli/api start
+```
+
+L'API écoute sur `http://127.0.0.1:3000`. Tout est en mémoire et quatre couturiers de démo sont créés au démarrage (`marie`, `karim`, `sofia`, `lucas`). Il n'y a pas d'authentification : l'identifiant du couturier passe dans la requête.
+
+| Interface | Route | Rôle |
+|---|---|---|
+| Site | `GET /catalog/alterations?garmentType=pants&fabric=dressy` | Retouches proposées et leur prix |
+| Site | `POST /quotes` | Étape 1 : devis d'une sélection |
+| Site | `POST /orders` | Étape 2 : passer la commande au prix du devis |
+| Site | `POST /orders/:orderId/cancel` | Annuler, tant que le travail n'a pas démarré |
+| App couturier | `GET /tailors/:tailorId/offers` | Propositions en attente (quartier, créneaux, articles : **jamais** le client) |
+| App couturier | `POST /missions/:missionId/accept` | Accepter et choisir le rendez-vous (`9h00`, `9h30`…) |
+| App couturier | `POST /missions/:missionId/decline` | Décliner |
+| App couturier | `GET /tailors/:tailorId/interventions` | Mes interventions, avec les coordonnées du client |
+| App couturier | `POST /interventions/:id/start` puis `/complete` | Démarrer, terminer |
+| Admin | `GET /admin/orders` | Suivi des commandes, construit à partir des événements |
+
+Exemple, avec un lundi à venir :
+
+```bash
+curl -s -X POST localhost:3000/orders -H 'content-type: application/json' -d '{
+  "items": [{ "garmentType": "dress", "fabric": "dressy", "alterationCodes": ["hem-ruffles"] }],
+  "address": { "street": "12 rue Oberkampf", "postalCode": "75011", "city": "Paris" },
+  "slots": [{ "start": "2026-11-16T09:00:00Z", "end": "2026-11-16T11:00:00Z" }],
+  "customer": { "firstName": "Léa", "lastName": "Martin", "phone": "+33600000000", "email": "lea@example.com" },
+  "quotedPriceGridVersion": "demo-2026-11"
+}'
+curl -s localhost:3000/tailors/marie/offers
 ```

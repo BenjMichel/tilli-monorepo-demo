@@ -12,6 +12,11 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  TOFU_VERSION: 1.13.9
+  TFLINT_VERSION: v0.66.0
+  TRIVY_VERSION: v0.76.2
+
 jobs:
   verify:
     name: Lint, types, architecture, tests
@@ -42,3 +47,101 @@ jobs:
 
       - name: Tests (Vitest)
         run: pnpm test
+
+  infra:
+    name: Infrastructure (OpenTofu)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: infra
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: opentofu/setup-opentofu@v2
+        with:
+          tofu_version: ${{ env.TOFU_VERSION }}
+          tofu_wrapper: false
+
+      - uses: terraform-linters/setup-tflint@v6
+        with:
+          tflint_version: ${{ env.TFLINT_VERSION }}
+
+      - name: Format
+        run: tofu fmt -check -recursive
+
+      # No GCP credentials: validate against the provider schema, and test against a mocked provider.
+      - name: Validate and test
+        run: |
+          for dir in modules/cloud-run-service modules/github-deployer envs/demo; do
+            echo "::group::$dir"
+            tofu -chdir="$dir" init -backend=false -input=false
+            tofu -chdir="$dir" validate
+            tofu -chdir="$dir" test
+            echo "::endgroup::"
+          done
+
+      - name: Lint (tflint)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          tflint --init --config="$PWD/.tflint.hcl"
+          tflint --recursive --config="$PWD/.tflint.hcl" --minimum-failure-severity=warning
+
+  security:
+    name: Security scans (Trivy)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Misconfigurations (OpenTofu, Dockerfile)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          version: ${{ env.TRIVY_VERSION }}
+          scan-type: config
+          scan-ref: .
+          severity: MEDIUM,HIGH,CRITICAL
+          exit-code: "1"
+
+      # The API is bundled into one file: npm dependencies are only visible in the lockfile.
+      - name: Vulnerable dependencies (pnpm-lock.yaml)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          version: ${{ env.TRIVY_VERSION }}
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
+  image:
+    name: Container image
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build
+        run: docker build --tag tilli-api:${{ github.sha }} .
+
+      - name: Smoke test
+        run: |
+          docker run --detach --name api --publish 8080:8080 tilli-api:${{ github.sha }}
+          for attempt in $(seq 1 20); do
+            if curl --silent --fail http://127.0.0.1:8080/health; then exit 0; fi
+            sleep 1
+          done
+          docker logs api
+          exit 1
+
+      - name: Vulnerabilities in the image
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          version: ${{ env.TRIVY_VERSION }}
+          scan-type: image
+          image-ref: tilli-api:${{ github.sha }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"

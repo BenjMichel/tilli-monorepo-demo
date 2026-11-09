@@ -3,14 +3,7 @@ import type { Candidate } from '../../src/domain/candidate';
 import { CandidateSelectionPolicy, type WaveRequest } from '../../src/domain/candidate-selection-policy';
 import { CandidateId } from '../../src/domain/ids';
 import { TimeSlot } from '../../src/domain/time-slot';
-import {
-  MONDAY_EVENING,
-  MONDAY_MORNING,
-  PARIS_15,
-  VERSAILLES,
-  aCandidate,
-  someRequirements,
-} from '../fixtures';
+import { aCandidate, MONDAY_EVENING, MONDAY_MORNING, PARIS_15, someRequirements, VERSAILLES } from '../fixtures';
 
 const policy = new CandidateSelectionPolicy([3, 5, Infinity]);
 
@@ -84,9 +77,7 @@ describe('CandidateSelectionPolicy', () => {
     });
 
     it('then prefers the closest candidates', () => {
-      const selected = policy.selectWave(
-        request([aCandidate('paris-15', { base: PARIS_15 }), aCandidate('paris-11')]),
-      );
+      const selected = policy.selectWave(request([aCandidate('paris-15', { base: PARIS_15 }), aCandidate('paris-11')]));
 
       expect(selected).toEqual(ids('paris-11', 'paris-15'));
     });

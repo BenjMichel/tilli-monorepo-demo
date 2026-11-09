@@ -2,19 +2,19 @@ import { randomUUID } from 'node:crypto';
 import type { IntegrationEventKey } from '@tilli/contracts';
 import {
   type Candidate,
+  createDispatchModule,
   InMemoryCandidateRepository,
   InMemoryMissionRepository,
   StaticAreaLocator,
   type WaveTimer,
-  createDispatchModule,
 } from '@tilli/dispatch';
 import { InMemoryEventBus } from '@tilli/event-bus';
 import {
+  createFulfillmentModule,
   InMemoryInterventionDraftRepository,
   InMemoryInterventionRepository,
-  createFulfillmentModule,
 } from '@tilli/fulfillment';
-import { InMemoryOrderRepository, InMemoryPriceGrids, PARIS_SERVICE_AREA, createOrderingModule } from '@tilli/ordering';
+import { createOrderingModule, InMemoryOrderRepository, InMemoryPriceGrids, PARIS_SERVICE_AREA } from '@tilli/ordering';
 import { OrderTrackingProjection } from './admin/order-tracking';
 import { SetTimeoutWaveTimer } from './infrastructure/set-timeout-wave-timer';
 

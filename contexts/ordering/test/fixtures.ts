@@ -12,4 +12,8 @@ export const PARIS_11_ADDRESS: Address = { street: '12 rue Oberkampf', postalCod
 
 export const LEA: Customer = { firstName: 'Léa', lastName: 'Martin', phone: '+33600000000', email: 'lea@example.com' };
 
-export const DRESSY_PANTS_HEM: ItemRequest = { garmentType: 'pants', fabric: 'dressy', alterationCodes: ['hem-simple'] };
+export const DRESSY_PANTS_HEM: ItemRequest = {
+  garmentType: 'pants',
+  fabric: 'dressy',
+  alterationCodes: ['hem-simple'],
+};

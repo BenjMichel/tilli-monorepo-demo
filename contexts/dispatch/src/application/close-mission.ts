@@ -1,4 +1,4 @@
-import { type OrderId, missionIdForOrder } from '../domain/ids';
+import { missionIdForOrder, type OrderId } from '../domain/ids';
 import type { MissionRepository } from '../domain/mission-repository';
 import { retryOnConflict } from './retry-on-conflict';
 

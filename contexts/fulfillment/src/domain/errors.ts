@@ -1,5 +1,5 @@
-import type { InterventionStatus } from './intervention';
 import type { InterventionId, TailorId } from './ids';
+import type { InterventionStatus } from './intervention-status';
 
 export abstract class FulfillmentError extends Error {
   abstract readonly code: string;

@@ -1,5 +1,5 @@
 import type { CandidateId, MissionId } from './ids';
-import type { MissionStatus, OfferStatus } from './mission';
+import type { MissionStatus, OfferStatus } from './mission-status';
 
 export abstract class DispatchError extends Error {
   abstract readonly code: string;

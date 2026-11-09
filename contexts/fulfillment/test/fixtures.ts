@@ -1,7 +1,10 @@
 import { OrderId, TailorId } from '../src/domain/ids';
 import type { InterventionDraft, TimeSlot } from '../src/domain/intervention-draft';
 
-export const MONDAY_MORNING: TimeSlot = { start: new Date('2026-11-16T09:00:00Z'), end: new Date('2026-11-16T11:00:00Z') };
+export const MONDAY_MORNING: TimeSlot = {
+  start: new Date('2026-11-16T09:00:00Z'),
+  end: new Date('2026-11-16T11:00:00Z'),
+};
 /** The 30-minute appointment the tailor picked within MONDAY_MORNING when accepting. */
 export const APPOINTMENT: TimeSlot = { start: new Date('2026-11-16T09:30:00Z'), end: new Date('2026-11-16T10:00:00Z') };
 

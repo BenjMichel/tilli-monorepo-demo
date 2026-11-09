@@ -16,7 +16,11 @@ export class FulfillmentEventRelay {
           await this.publisher.publish({
             ...envelope,
             type: 'InterventionStarted',
-            payload: { interventionId: event.interventionId, orderId: event.orderId, startedAt: event.startedAt.toISOString() },
+            payload: {
+              interventionId: event.interventionId,
+              orderId: event.orderId,
+              startedAt: event.startedAt.toISOString(),
+            },
           });
           break;
         case 'InterventionCompleted':

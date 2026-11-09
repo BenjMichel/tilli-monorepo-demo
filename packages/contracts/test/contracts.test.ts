@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { IntegrationEvent, OrderPlacedV1, keyOf } from '../src';
+import { IntegrationEvent, keyOf, OrderPlacedV1 } from '../src';
 
 const anOrderPlaced = {
   eventId: 'evt-1',
@@ -24,13 +24,19 @@ describe('integration event contracts', () => {
   });
 
   it('rejects an order without items or slots', () => {
-    expect(OrderPlacedV1.safeParse({ ...anOrderPlaced, payload: { ...anOrderPlaced.payload, items: [] } }).success).toBe(false);
-    expect(OrderPlacedV1.safeParse({ ...anOrderPlaced, payload: { ...anOrderPlaced.payload, slots: [] } }).success).toBe(false);
+    expect(
+      OrderPlacedV1.safeParse({ ...anOrderPlaced, payload: { ...anOrderPlaced.payload, items: [] } }).success,
+    ).toBe(false);
+    expect(
+      OrderPlacedV1.safeParse({ ...anOrderPlaced, payload: { ...anOrderPlaced.payload, slots: [] } }).success,
+    ).toBe(false);
   });
 
   it('rejects an unknown fabric', () => {
     const silk = { ...anOrderPlaced.payload.items[0], fabric: 'silk' };
-    expect(OrderPlacedV1.safeParse({ ...anOrderPlaced, payload: { ...anOrderPlaced.payload, items: [silk] } }).success).toBe(false);
+    expect(
+      OrderPlacedV1.safeParse({ ...anOrderPlaced, payload: { ...anOrderPlaced.payload, items: [silk] } }).success,
+    ).toBe(false);
   });
 
   it('rejects another version of the same event type', () => {

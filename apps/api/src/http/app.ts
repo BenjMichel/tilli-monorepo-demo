@@ -79,7 +79,10 @@ export function buildApp(platform: Platform): FastifyInstance {
   app.post('/missions/:missionId/decline', async (request, reply) => {
     const { missionId } = z.object({ missionId: z.string() }).parse(request.params);
     const { tailorId } = TailorBody.parse(request.body);
-    await dispatch.commands.declineOffer.execute({ missionId: MissionId(missionId), candidateId: CandidateId(tailorId) });
+    await dispatch.commands.declineOffer.execute({
+      missionId: MissionId(missionId),
+      candidateId: CandidateId(tailorId),
+    });
     await platform.pump();
     return reply.status(204).send();
   });
@@ -93,7 +96,10 @@ export function buildApp(platform: Platform): FastifyInstance {
     app.post(`/interventions/:interventionId/${action}`, async (request, reply) => {
       const { interventionId } = z.object({ interventionId: z.string() }).parse(request.params);
       const { tailorId } = TailorBody.parse(request.body);
-      await fulfillment.commands[action]({ interventionId: InterventionId(interventionId), tailorId: TailorId(tailorId) });
+      await fulfillment.commands[action]({
+        interventionId: InterventionId(interventionId),
+        tailorId: TailorId(tailorId),
+      });
       await platform.pump();
       return reply.status(204).send();
     });

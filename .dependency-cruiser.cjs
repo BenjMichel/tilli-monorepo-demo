@@ -78,7 +78,7 @@ module.exports = {
     doNotFollow: { path: 'node_modules' },
     exclude: { path: '(^|/)node_modules/' },
     enhancedResolveOptions: {
-      extensions: ['.ts', '.js'],
+      extensions: ['.ts', '.tsx', '.js'],
       exportsFields: ['exports'],
       conditionNames: ['import', 'default'],
     },

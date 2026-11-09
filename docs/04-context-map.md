@@ -38,7 +38,7 @@ flowchart LR
 - Un contexte n'importe **jamais** le code d'un autre contexte. Le seul code partagé est `contracts/`, qui contient les schémas versionnés des événements d'intégration.
 - Il n'y a **pas de shared kernel** : `Money` ou `TimeSlot` sont dupliqués si besoin, parce que la duplication coûte moins cher que le couplage.
 - Les événements de domaine (internes) et les événements d'intégration (publics) sont distincts. Chaque contexte traduit les premiers en seconds.
-- La **CI vérifie ces règles** avec dependency-cruiser ou un outil équivalent.
+- La **CI vérifie ces règles** avec dependency-cruiser ([`.dependency-cruiser.cjs`](../.dependency-cruiser.cjs)) : isolation des contextes, domaine sans dépendance, application sans infrastructure, accès aux contextes par leur seul `index.ts`, pas de cycle. Les imports de type seul comptent aussi.
 
 ## Le suivi admin est une projection
 

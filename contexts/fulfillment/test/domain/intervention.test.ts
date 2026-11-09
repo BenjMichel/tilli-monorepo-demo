@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { InvalidTransition, NotAssignedTailor, TooEarlyToStart } from '../../src/domain/errors';
 import { Intervention } from '../../src/domain/intervention';
-import { APPOINTMENT, KARIM, MARIE, aDraft } from '../fixtures';
+import { APPOINTMENT, aDraft, KARIM, MARIE } from '../fixtures';
 
 const LATER = new Date('2026-11-16T10:30:00Z');
 
@@ -54,7 +54,12 @@ describe('Intervention', () => {
 
       expect(intervention.status).toBe('completed');
       expect(intervention.pullEvents()).toEqual([
-        { type: 'InterventionStarted', interventionId: 'intervention-o-1', orderId: 'o-1', startedAt: APPOINTMENT.start },
+        {
+          type: 'InterventionStarted',
+          interventionId: 'intervention-o-1',
+          orderId: 'o-1',
+          startedAt: APPOINTMENT.start,
+        },
         { type: 'InterventionCompleted', interventionId: 'intervention-o-1', orderId: 'o-1', completedAt: LATER },
       ]);
     });

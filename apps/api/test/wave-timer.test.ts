@@ -1,4 +1,4 @@
-import { CandidateId, type Candidate, MissionId } from '@tilli/dispatch';
+import { type Candidate, CandidateId, MissionId } from '@tilli/dispatch';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { buildApp } from '../src/http/app';
 import { SetTimeoutWaveTimer } from '../src/infrastructure/set-timeout-wave-timer';

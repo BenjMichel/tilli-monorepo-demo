@@ -1,5 +1,5 @@
 import type { CandidateSelectionPolicy } from '../domain/candidate-selection-policy';
-import { type OrderId, missionIdForOrder } from '../domain/ids';
+import { missionIdForOrder, type OrderId } from '../domain/ids';
 import { Mission } from '../domain/mission';
 import type { MissionRepository } from '../domain/mission-repository';
 import type { MissionRequirements } from '../domain/mission-requirements';

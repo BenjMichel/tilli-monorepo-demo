@@ -1,11 +1,16 @@
-import { InterventionCompletedV1, InterventionStartedV1, type MissionAwardedV1, type OrderPlacedV1 } from '@tilli/contracts';
+import {
+  InterventionCompletedV1,
+  InterventionStartedV1,
+  type MissionAwardedV1,
+  type OrderPlacedV1,
+} from '@tilli/contracts';
 import { InMemoryEventBus } from '@tilli/event-bus';
 import { describe, expect, it } from 'vitest';
 import {
+  createFulfillmentModule,
   InMemoryInterventionDraftRepository,
   InMemoryInterventionRepository,
   InterventionId,
-  createFulfillmentModule,
 } from '../../src';
 import { DraftNotFound } from '../../src/application/upstream-reactions';
 import { APPOINTMENT, KARIM, MARIE, MONDAY_MORNING } from '../fixtures';
@@ -80,7 +85,11 @@ describe('Fulfillment, driven by integration events', () => {
     await app.bus.publish(missionAwarded('marie'));
 
     const [mine] = await app.fulfillment.queries.myInterventions.list(MARIE);
-    expect(mine).toMatchObject({ id: interventionId, status: 'scheduled', customer: { fullName: 'Léa Martin', phone: '+33600000000' } });
+    expect(mine).toMatchObject({
+      id: interventionId,
+      status: 'scheduled',
+      customer: { fullName: 'Léa Martin', phone: '+33600000000' },
+    });
     expect(await app.fulfillment.queries.myInterventions.list(KARIM)).toEqual([]);
 
     await app.fulfillment.commands.start({ interventionId, tailorId: MARIE });

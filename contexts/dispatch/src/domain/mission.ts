@@ -12,12 +12,12 @@ import {
 import type { CandidateId, MissionId, OrderId } from './ids';
 import type { MissionEvent } from './mission-events';
 import { copyRequirements, type MissionRequirements } from './mission-requirements';
-import { TimeSlot, copyTimeSlot, isWithin } from './time-slot';
+import type { MissionStatus, OfferStatus } from './mission-status';
+import { copyTimeSlot, isWithin, TimeSlot } from './time-slot';
 
 export const APPOINTMENT_DURATION_MS = 30 * 60_000;
 
-export type MissionStatus = 'open' | 'offering' | 'awarded' | 'unstaffed' | 'closed';
-export type OfferStatus = 'pending' | 'accepted' | 'declined' | 'withdrawn' | 'expired';
+export type { MissionStatus, OfferStatus };
 
 export type Offer = {
   readonly candidateId: CandidateId;
@@ -159,7 +159,13 @@ export class Mission {
     this.state.waves.push({ number: wave, expiresAt });
     this.state.offers.push(...candidateIds.map((candidateId) => ({ candidateId, wave, status: 'pending' as const })));
     this.state.status = 'offering';
-    this.record({ type: 'OfferWaveLaunched', missionId: this.state.id, wave, candidateIds: [...candidateIds], expiresAt });
+    this.record({
+      type: 'OfferWaveLaunched',
+      missionId: this.state.id,
+      wave,
+      candidateIds: [...candidateIds],
+      expiresAt,
+    });
   }
 
   /**
@@ -211,7 +217,12 @@ export class Mission {
       return offer.candidateId;
     });
     if (expired.length > 0) {
-      this.record({ type: 'OfferWaveExpired', missionId: this.state.id, wave: wave.number, expiredCandidateIds: expired });
+      this.record({
+        type: 'OfferWaveExpired',
+        missionId: this.state.id,
+        wave: wave.number,
+        expiredCandidateIds: expired,
+      });
     }
     this.markUnstaffedIfExhausted();
   }

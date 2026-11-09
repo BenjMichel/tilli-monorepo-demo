@@ -27,7 +27,12 @@ const carol = CandidateId('carol');
 const dave = CandidateId('dave');
 
 function anOpenMission(maxWaves = 3): Mission {
-  const mission = Mission.open({ id: MissionId('m-1'), orderId: OrderId('o-1'), requirements: someRequirements(), maxWaves });
+  const mission = Mission.open({
+    id: MissionId('m-1'),
+    orderId: OrderId('o-1'),
+    requirements: someRequirements(),
+    maxWaves,
+  });
   mission.pullEvents();
   return mission;
 }
@@ -45,7 +50,12 @@ const statusOf = (mission: Mission, candidateId: CandidateId) =>
 describe('Mission', () => {
   describe('opening', () => {
     it('starts open, without any offer', () => {
-      const mission = Mission.open({ id: MissionId('m-1'), orderId: OrderId('o-1'), requirements: someRequirements(), maxWaves: 3 });
+      const mission = Mission.open({
+        id: MissionId('m-1'),
+        orderId: OrderId('o-1'),
+        requirements: someRequirements(),
+        maxWaves: 3,
+      });
 
       expect(mission.status).toBe('open');
       expect(mission.offers).toEqual([]);
@@ -53,7 +63,9 @@ describe('Mission', () => {
     });
 
     it('requires at least one wave', () => {
-      expect(() => Mission.open({ id: MissionId('m-1'), orderId: OrderId('o-1'), requirements: someRequirements(), maxWaves: 0 })).toThrow(RangeError);
+      expect(() =>
+        Mission.open({ id: MissionId('m-1'), orderId: OrderId('o-1'), requirements: someRequirements(), maxWaves: 0 }),
+      ).toThrow(RangeError);
     });
   });
 
@@ -70,7 +82,13 @@ describe('Mission', () => {
         [carol, 'pending'],
       ]);
       expect(mission.pullEvents()).toEqual([
-        { type: 'OfferWaveLaunched', missionId: 'm-1', wave: 1, candidateIds: [alice, bob, carol], expiresAt: DEADLINE },
+        {
+          type: 'OfferWaveLaunched',
+          missionId: 'm-1',
+          wave: 1,
+          candidateIds: [alice, bob, carol],
+          expiresAt: DEADLINE,
+        },
       ]);
     });
 
@@ -142,12 +160,12 @@ describe('Mission', () => {
       const nineToTenFortyFive = TimeSlot(new Date('2026-11-16T09:00:00Z'), new Date('2026-11-16T10:45:00Z'));
       const mustFit = 'The 30-minute appointment must fit in one of the customer slots';
 
-      expect(() => offeredWithin(nineToTenFortyFive).accept(alice, minutesAfterT0(5), new Date('2026-11-16T10:30:00Z'))).toThrow(
-        mustFit,
-      );
-      expect(() => offeredWithin(nineToTenFortyFive).accept(alice, minutesAfterT0(5), new Date('2026-11-16T14:00:00Z'))).toThrow(
-        mustFit,
-      );
+      expect(() =>
+        offeredWithin(nineToTenFortyFive).accept(alice, minutesAfterT0(5), new Date('2026-11-16T10:30:00Z')),
+      ).toThrow(mustFit);
+      expect(() =>
+        offeredWithin(nineToTenFortyFive).accept(alice, minutesAfterT0(5), new Date('2026-11-16T14:00:00Z')),
+      ).toThrow(mustFit);
 
       const mission = offeredWithin(nineToTenFortyFive);
       mission.accept(alice, minutesAfterT0(5), new Date('2026-11-16T10:00:00Z'));
@@ -160,10 +178,18 @@ describe('Mission', () => {
     it('only starts on the hour or half past', () => {
       const onGrid = 'The appointment must start on the hour or half past';
 
-      expect(() => aMissionOfferedTo([alice]).accept(alice, minutesAfterT0(5), new Date('2026-11-16T09:10:00Z'))).toThrow(onGrid);
-      expect(() => aMissionOfferedTo([alice]).accept(alice, minutesAfterT0(5), new Date('2026-11-16T09:30:20Z'))).toThrow(onGrid);
-      expect(() => aMissionOfferedTo([alice]).accept(alice, minutesAfterT0(5), new Date('2026-11-16T09:00:00Z'))).not.toThrow();
-      expect(() => aMissionOfferedTo([alice]).accept(alice, minutesAfterT0(5), new Date('2026-11-16T09:30:00Z'))).not.toThrow();
+      expect(() =>
+        aMissionOfferedTo([alice]).accept(alice, minutesAfterT0(5), new Date('2026-11-16T09:10:00Z')),
+      ).toThrow(onGrid);
+      expect(() =>
+        aMissionOfferedTo([alice]).accept(alice, minutesAfterT0(5), new Date('2026-11-16T09:30:20Z')),
+      ).toThrow(onGrid);
+      expect(() =>
+        aMissionOfferedTo([alice]).accept(alice, minutesAfterT0(5), new Date('2026-11-16T09:00:00Z')),
+      ).not.toThrow();
+      expect(() =>
+        aMissionOfferedTo([alice]).accept(alice, minutesAfterT0(5), new Date('2026-11-16T09:30:00Z')),
+      ).not.toThrow();
     });
 
     it('refuses an appointment that has already begun, even inside a customer slot', () => {
@@ -182,7 +208,9 @@ describe('Mission', () => {
     it('keeps the offer pending when the appointment is refused, so the tailor can pick another one', () => {
       const mission = aMissionOfferedTo([alice]);
 
-      expect(() => mission.accept(alice, minutesAfterT0(5), new Date('2026-11-16T14:00:00Z'))).toThrow(InvalidAppointment);
+      expect(() => mission.accept(alice, minutesAfterT0(5), new Date('2026-11-16T14:00:00Z'))).toThrow(
+        InvalidAppointment,
+      );
 
       expect(mission.status).toBe('offering');
       expect(statusOf(mission, alice)).toBe('pending');
@@ -305,9 +333,7 @@ describe('Mission', () => {
       mission.declareUnstaffed();
 
       expect(mission.status).toBe('unstaffed');
-      expect(mission.pullEvents()).toEqual([
-        { type: 'MissionUnstaffed', missionId: 'm-1', orderId: 'o-1', waves: 1 },
-      ]);
+      expect(mission.pullEvents()).toEqual([{ type: 'MissionUnstaffed', missionId: 'm-1', orderId: 'o-1', waves: 1 }]);
     });
 
     it('waits for the pending offers of the current wave', () => {

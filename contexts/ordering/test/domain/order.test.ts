@@ -46,9 +46,9 @@ describe('Order', () => {
 
     it('requires at least one time slot, each in the future and ending after it starts', () => {
       expect(() => place({ slots: [] })).toThrow(InvalidOrder);
-      expect(() => place({ slots: [{ start: new Date('2026-11-08T09:00:00Z'), end: new Date('2026-11-08T11:00:00Z') }] })).toThrow(
-        'Time slots must be in the future',
-      );
+      expect(() =>
+        place({ slots: [{ start: new Date('2026-11-08T09:00:00Z'), end: new Date('2026-11-08T11:00:00Z') }] }),
+      ).toThrow('Time slots must be in the future');
       expect(() => place({ slots: [{ start: MONDAY_MORNING.end, end: MONDAY_MORNING.start }] })).toThrow(InvalidOrder);
     });
 

@@ -1,5 +1,5 @@
 import { InvalidOrder } from './errors';
-import { type Money, ZERO, add } from './money';
+import { add, type Money, ZERO } from './money';
 import type { Fabric, GarmentType, PriceGrid } from './price-grid';
 
 export type ItemRequest = {

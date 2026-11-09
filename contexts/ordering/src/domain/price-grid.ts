@@ -1,5 +1,5 @@
 import { AlterationNotOffered } from './errors';
-import { Money } from './money';
+import type { Money } from './money';
 
 export type GarmentType = string;
 export type Fabric = 'basic' | 'dressy';

@@ -2,27 +2,27 @@ import type { IntegrationEventKey } from '@tilli/contracts';
 import {
   type Candidate,
   CandidateId,
+  createDispatchModule,
   InMemoryCandidateRepository,
   InMemoryMissionRepository,
   MissionId,
   StaticAreaLocator,
-  createDispatchModule,
 } from '@tilli/dispatch';
 import { InMemoryEventBus } from '@tilli/event-bus';
 import {
+  createFulfillmentModule,
   InMemoryInterventionDraftRepository,
   InMemoryInterventionRepository,
   InterventionId,
   TailorId,
-  createFulfillmentModule,
 } from '@tilli/fulfillment';
 import {
+  createOrderingModule,
   DEMO_PRICE_GRID,
   InMemoryOrderRepository,
   InMemoryPriceGrids,
   OrderId,
   PARIS_SERVICE_AREA,
-  createOrderingModule,
 } from '@tilli/ordering';
 import { describe, expect, it } from 'vitest';
 
@@ -62,7 +62,11 @@ function aRunningPlatform() {
   });
   const dispatch = createDispatchModule({
     missions,
-    candidates: new InMemoryCandidateRepository([tailor('marie'), tailor('karim'), tailor('basic-only', { fabrics: ['basic'] })]),
+    candidates: new InMemoryCandidateRepository([
+      tailor('marie'),
+      tailor('karim'),
+      tailor('basic-only', { fabrics: ['basic'] }),
+    ]),
     areas: new StaticAreaLocator(),
     publisher: bus,
     timer: { schedule: async () => {} },

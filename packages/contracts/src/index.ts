@@ -3,8 +3,8 @@ import { MissionAwardedV1, MissionUnstaffedV1 } from './dispatch';
 import { InterventionCompletedV1, InterventionStartedV1 } from './fulfillment';
 import { OrderCancelledV1, OrderPlacedV1 } from './ordering';
 
-export { eventSchema } from './envelope';
 export { MissionAwardedV1, MissionUnstaffedV1 } from './dispatch';
+export { eventSchema } from './envelope';
 export { InterventionCompletedV1, InterventionStartedV1 } from './fulfillment';
 export { Fabric, OrderCancelledV1, OrderPlacedV1 } from './ordering';
 

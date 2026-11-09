@@ -38,6 +38,6 @@ export function createOrderingModule(deps: OrderingDependencies) {
 
 export type OrderingModule = ReturnType<typeof createOrderingModule>;
 export { OrderId } from './domain/order';
-export { InMemoryOrderRepository } from './infrastructure/in-memory-order-repository';
 export { DEMO_PRICE_GRID, InMemoryPriceGrids } from './infrastructure/demo-price-grid';
 export { PARIS_SERVICE_AREA } from './infrastructure/demo-service-area';
+export { InMemoryOrderRepository } from './infrastructure/in-memory-order-repository';

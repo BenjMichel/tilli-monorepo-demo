@@ -121,9 +121,12 @@ export class Order {
     this.state.interventionStarted = true;
   }
 
+  /**
+   * Fed by Fulfillment, so it reports a fact that cannot be refused. A cancellation that crossed
+   * the start of the work leaves the order cancelled; Fulfillment has already alerted the ops team.
+   */
   complete(): void {
-    if (this.state.status === 'completed') return;
-    if (this.state.status === 'cancelled') throw new InvalidOrder('A cancelled order cannot be completed');
+    if (this.state.status !== 'placed') return;
     this.state.status = 'completed';
     this.pendingEvents.push({ type: 'OrderCompleted', orderId: this.state.id });
   }

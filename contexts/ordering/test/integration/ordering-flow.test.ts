@@ -124,11 +124,7 @@ describe('Ordering funnel', () => {
       quotedPriceGridVersion: DEMO_PRICE_GRID.version,
     });
 
-    const startedByTailor = (async () => {
-      const order = await orders.get(OrderId(orderId));
-      order.recordInterventionStarted();
-      await orders.save(order);
-    })();
+    const startedByTailor = ordering.subscriptions['InterventionStarted.v1'](interventionEvent('InterventionStarted', orderId));
     const cancelledByCustomer = ordering.commands.cancelOrder.execute({ orderId, reason: 'customer request' });
 
     const [started, cancelled] = await Promise.allSettled([startedByTailor, cancelledByCustomer]);
@@ -136,4 +132,32 @@ describe('Ordering funnel', () => {
     expect(cancelled.status === 'rejected' && cancelled.reason).toBeInstanceOf(OrderCannotBeCancelled);
     expect((await orders.get(OrderId(orderId))).status).toBe('placed');
   });
+
+  it('completes the order when Fulfillment reports the work done, even if the start was never received', async () => {
+    const { orders, ordering } = aRunningOrdering();
+    const { orderId } = await ordering.commands.placeOrder.execute({
+      items: [DRESSY_PANTS_HEM],
+      address: PARIS_11_ADDRESS,
+      slots: [MONDAY_MORNING],
+      customer: LEA,
+      quotedPriceGridVersion: DEMO_PRICE_GRID.version,
+    });
+
+    await ordering.subscriptions['InterventionCompleted.v1'](interventionEvent('InterventionCompleted', orderId));
+    await ordering.subscriptions['InterventionCompleted.v1'](interventionEvent('InterventionCompleted', orderId));
+
+    expect((await orders.get(OrderId(orderId))).status).toBe('completed');
+    await expect(ordering.commands.cancelOrder.execute({ orderId, reason: 'too late' })).rejects.toThrow(
+      OrderCannotBeCancelled,
+    );
+  });
 });
+
+function interventionEvent(type: 'InterventionStarted' | 'InterventionCompleted', orderId: string) {
+  const at = '2026-11-16T09:00:00.000Z';
+  const payload =
+    type === 'InterventionStarted'
+      ? { interventionId: `intervention-${orderId}`, orderId, startedAt: at }
+      : { interventionId: `intervention-${orderId}`, orderId, completedAt: at };
+  return { eventId: `fulfillment:${orderId}:${type}`, type, version: 1, occurredAt: at, payload };
+}

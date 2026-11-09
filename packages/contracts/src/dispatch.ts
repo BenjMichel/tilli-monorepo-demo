@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { eventSchema } from './envelope';
+import { eventSchema, isoDateTime } from './envelope';
 
 export const MissionAwardedV1 = eventSchema(
   'MissionAwarded',
@@ -8,6 +8,8 @@ export const MissionAwardedV1 = eventSchema(
     missionId: z.string().min(1),
     orderId: z.string().min(1),
     tailorId: z.string().min(1),
+    /** Chosen by the tailor when accepting, within the customer's slots. Final. */
+    appointment: z.object({ start: isoDateTime, end: isoDateTime }),
   }),
 );
 export type MissionAwardedV1 = z.infer<typeof MissionAwardedV1>;

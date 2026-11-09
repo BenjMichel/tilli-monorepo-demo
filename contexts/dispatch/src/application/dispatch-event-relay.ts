@@ -64,7 +64,12 @@ function toIntegrationEvent(
     return {
       ...envelope,
       type: 'MissionAwarded',
-      payload: { missionId: event.missionId, orderId: event.orderId, tailorId: event.candidateId },
+      payload: {
+        missionId: event.missionId,
+        orderId: event.orderId,
+        tailorId: event.candidateId,
+        appointment: { start: event.appointment.start.toISOString(), end: event.appointment.end.toISOString() },
+      },
     };
   }
   return {

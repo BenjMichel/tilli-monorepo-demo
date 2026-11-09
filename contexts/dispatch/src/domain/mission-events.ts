@@ -1,4 +1,5 @@
 import type { CandidateId, MissionId, OrderId } from './ids';
+import type { TimeSlot } from './time-slot';
 
 export type MissionOpened = {
   readonly type: 'MissionOpened';
@@ -32,6 +33,7 @@ export type MissionAwarded = {
   readonly missionId: MissionId;
   readonly orderId: OrderId;
   readonly candidateId: CandidateId;
+  readonly appointment: TimeSlot;
   readonly withdrawnCandidateIds: readonly CandidateId[];
 };
 

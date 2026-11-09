@@ -28,6 +28,8 @@ import { describe, expect, it } from 'vitest';
 
 const MONDAY_MORNING = { start: new Date('2026-11-16T09:00:00Z'), end: new Date('2026-11-16T11:00:00Z') };
 const MONDAY_ALL_DAY = { start: new Date('2026-11-16T08:00:00Z'), end: new Date('2026-11-16T21:00:00Z') };
+/** The tailor picks a 30-minute appointment within the customer slot when accepting. */
+const APPOINTMENT_START = new Date('2026-11-16T09:30:00Z');
 
 function tailor(id: string, overrides: Partial<Omit<Candidate, 'id'>> = {}): Candidate {
   return {
@@ -128,14 +130,18 @@ describe('Order lifecycle across Ordering, Dispatch and Fulfillment', () => {
       ['marie', 'pending'],
     ]);
 
-    await platform.dispatch.commands.acceptOffer.execute({ missionId, candidateId: CandidateId('marie') });
+    await platform.dispatch.commands.acceptOffer.execute({
+      missionId,
+      candidateId: CandidateId('marie'),
+      appointmentStart: APPOINTMENT_START,
+    });
     await platform.relayAll();
 
     const [intervention] = await platform.fulfillment.queries.myInterventions.list(marie);
     expect(intervention?.customer).toMatchObject({ fullName: 'Léa Martin', phone: '+33600000000' });
+    expect(intervention?.appointment).toEqual({ start: APPOINTMENT_START, end: new Date('2026-11-16T10:00:00Z') });
 
-    await platform.fulfillment.commands.confirmAppointment({ interventionId, tailorId: marie, slot: MONDAY_MORNING });
-    platform.setNow(MONDAY_MORNING.start);
+    platform.setNow(APPOINTMENT_START);
     await platform.fulfillment.commands.start({ interventionId, tailorId: marie });
     await platform.relayAll();
 
@@ -172,7 +178,11 @@ describe('Order lifecycle across Ordering, Dispatch and Fulfillment', () => {
   it('cancels the intervention when the customer cancels after the award but before the work', async () => {
     const platform = aRunningPlatform();
     const orderId = await placeDressyPantsHem(platform);
-    await platform.dispatch.commands.acceptOffer.execute({ missionId, candidateId: CandidateId('marie') });
+    await platform.dispatch.commands.acceptOffer.execute({
+      missionId,
+      candidateId: CandidateId('marie'),
+      appointmentStart: APPOINTMENT_START,
+    });
     await platform.relayAll();
 
     await platform.ordering.commands.cancelOrder.execute({ orderId, reason: 'customer request' });

@@ -1,9 +1,9 @@
-import { InvalidTransition, NotAssignedTailor, SlotNotProposed, TooEarlyToStart } from './errors';
+import { InvalidTransition, NotAssignedTailor, TooEarlyToStart } from './errors';
 import { type InterventionId, type OrderId, type TailorId, interventionIdForOrder } from './ids';
 import type { CustomerContact, InterventionDraft, TimeSlot, WorkItem } from './intervention-draft';
 import type { InterventionEvent } from './intervention-events';
 
-export type InterventionStatus = 'scheduled' | 'appointment-confirmed' | 'in-progress' | 'completed' | 'cancelled';
+export type InterventionStatus = 'scheduled' | 'in-progress' | 'completed' | 'cancelled';
 
 export type InterventionSnapshot = {
   readonly id: InterventionId;
@@ -11,8 +11,8 @@ export type InterventionSnapshot = {
   readonly tailorId: TailorId;
   readonly customer: CustomerContact;
   readonly workSheet: readonly WorkItem[];
-  readonly proposedSlots: readonly TimeSlot[];
-  appointment: TimeSlot | null;
+  /** Picked by the tailor when accepting the mission (Dispatch owns that rule). Final. */
+  readonly appointment: TimeSlot;
   status: InterventionStatus;
   startedAt: Date | null;
   completedAt: Date | null;
@@ -27,22 +27,21 @@ export class Intervention {
   private constructor(private readonly state: InterventionSnapshot) {}
 
   /** The tailor won the mission. If the order was cancelled meanwhile, they are told at once. */
-  static schedule(draft: InterventionDraft, tailorId: TailorId): Intervention {
+  static schedule(draft: InterventionDraft, tailorId: TailorId, appointment: TimeSlot): Intervention {
     const intervention = new Intervention({
       id: interventionIdForOrder(draft.orderId),
       orderId: draft.orderId,
       tailorId,
       customer: draft.customer,
       workSheet: draft.workSheet,
-      proposedSlots: draft.proposedSlots.map(copySlot),
-      appointment: null,
+      appointment: copySlot(appointment),
       status: 'scheduled',
       startedAt: null,
       completedAt: null,
       lateCancellation: false,
       version: 0,
     });
-    intervention.record({ type: 'InterventionScheduled', tailorId });
+    intervention.record({ type: 'InterventionScheduled', tailorId, appointment: copySlot(appointment) });
     if (draft.cancelled) intervention.cancel();
     return intervention;
   }
@@ -77,27 +76,9 @@ export class Intervention {
     return events;
   }
 
-  /** Can be changed until the work starts. */
-  confirmAppointment(tailorId: TailorId, slot: TimeSlot): void {
-    this.assertAssigned(tailorId);
-    if (this.state.status !== 'scheduled' && this.state.status !== 'appointment-confirmed') {
-      throw new InvalidTransition('confirm an appointment for', this.state.status);
-    }
-    const proposed = this.state.proposedSlots.some(
-      (candidate) => candidate.start.getTime() === slot.start.getTime() && candidate.end.getTime() === slot.end.getTime(),
-    );
-    if (!proposed) throw new SlotNotProposed();
-
-    this.state.appointment = copySlot(slot);
-    this.state.status = 'appointment-confirmed';
-    this.record({ type: 'AppointmentConfirmed', start: slot.start, end: slot.end });
-  }
-
   start(tailorId: TailorId, now: Date): void {
     this.assertAssigned(tailorId);
-    if (this.state.status !== 'appointment-confirmed' || !this.state.appointment) {
-      throw new InvalidTransition('start', this.state.status);
-    }
+    if (this.state.status !== 'scheduled') throw new InvalidTransition('start', this.state.status);
     if (now < this.state.appointment.start) throw new TooEarlyToStart(this.state.appointment.start);
 
     this.state.status = 'in-progress';
@@ -121,7 +102,6 @@ export class Intervention {
   cancel(): void {
     switch (this.state.status) {
       case 'scheduled':
-      case 'appointment-confirmed':
         this.state.status = 'cancelled';
         this.record({ type: 'InterventionCancelled' });
         return;
@@ -152,8 +132,7 @@ const copySlot = (slot: TimeSlot): TimeSlot => ({ start: new Date(slot.start), e
 function copyOf(snapshot: InterventionSnapshot): InterventionSnapshot {
   return {
     ...snapshot,
-    proposedSlots: snapshot.proposedSlots.map(copySlot),
-    appointment: snapshot.appointment && copySlot(snapshot.appointment),
+    appointment: copySlot(snapshot.appointment),
     startedAt: snapshot.startedAt && new Date(snapshot.startedAt),
     completedAt: snapshot.completedAt && new Date(snapshot.completedAt),
   };

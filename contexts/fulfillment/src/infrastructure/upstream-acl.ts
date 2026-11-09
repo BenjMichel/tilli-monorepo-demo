@@ -23,13 +23,15 @@ export class UpstreamAcl {
         fabric: item.fabric,
         alterationCodes: item.alterations.map((alteration) => alteration.code),
       })),
-      proposedSlots: payload.slots.map((slot) => ({ start: new Date(slot.start), end: new Date(slot.end) })),
     });
   };
 
   readonly onMissionAwarded = async (raw: unknown): Promise<void> => {
     const { payload } = MissionAwardedV1.parse(raw);
-    await this.reactions.missionAwarded(OrderId(payload.orderId), TailorId(payload.tailorId));
+    await this.reactions.missionAwarded(OrderId(payload.orderId), TailorId(payload.tailorId), {
+      start: new Date(payload.appointment.start),
+      end: new Date(payload.appointment.end),
+    });
   };
 
   readonly onOrderCancelled = async (raw: unknown): Promise<void> => {

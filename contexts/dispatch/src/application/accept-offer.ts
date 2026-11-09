@@ -6,10 +6,12 @@ import { retryOnConflict } from './retry-on-conflict';
 export type AcceptOfferCommand = {
   readonly missionId: MissionId;
   readonly candidateId: CandidateId;
+  /** Start of the 30-minute appointment the tailor picks when accepting. */
+  readonly appointmentStart: Date;
 };
 
 /**
- * A tailor accepts an offer. When two acceptances race, the repository rejects the
+ * A tailor accepts an offer and picks the appointment. When two acceptances race, the repository rejects the
  * second save; we reload and let the aggregate answer with the up-to-date state.
  */
 export class AcceptOffer {
@@ -22,7 +24,7 @@ export class AcceptOffer {
   execute(command: AcceptOfferCommand): Promise<void> {
     return retryOnConflict(this.maxAttempts, async () => {
       const mission = await this.missions.get(command.missionId);
-      mission.accept(command.candidateId, this.clock.now());
+      mission.accept(command.candidateId, this.clock.now(), command.appointmentStart);
       await this.missions.save(mission);
     });
   }

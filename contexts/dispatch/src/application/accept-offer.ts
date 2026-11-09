@@ -1,6 +1,7 @@
 import type { CandidateId, MissionId } from '../domain/ids';
-import { MissionConcurrencyConflict, type MissionRepository } from '../domain/mission-repository';
+import type { MissionRepository } from '../domain/mission-repository';
 import type { Clock } from './clock';
+import { retryOnConflict } from './retry-on-conflict';
 
 export type AcceptOfferCommand = {
   readonly missionId: MissionId;
@@ -18,17 +19,11 @@ export class AcceptOffer {
     private readonly maxAttempts = 3,
   ) {}
 
-  async execute(command: AcceptOfferCommand): Promise<void> {
-    for (let attempt = 1; ; attempt++) {
+  execute(command: AcceptOfferCommand): Promise<void> {
+    return retryOnConflict(this.maxAttempts, async () => {
       const mission = await this.missions.get(command.missionId);
       mission.accept(command.candidateId, this.clock.now());
-      try {
-        await this.missions.save(mission);
-        return;
-      } catch (error) {
-        if (error instanceof MissionConcurrencyConflict && attempt < this.maxAttempts) continue;
-        throw error;
-      }
-    }
+      await this.missions.save(mission);
+    });
   }
 }

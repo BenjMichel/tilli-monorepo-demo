@@ -40,7 +40,7 @@ describe('AcceptOffer', () => {
 
     const mission = await repository.get(missionId);
     expect(mission.awardedTo).toBe(alice);
-    expect(repository.outbox.filter((event) => event.type === 'MissionAwarded')).toHaveLength(1);
+    expect(repository.outbox.filter((entry) => entry.event.type === 'MissionAwarded')).toHaveLength(1);
   });
 
   it('relies on the repository version check when both acceptances load the same mission', async () => {
@@ -61,6 +61,7 @@ describe('AcceptOffer', () => {
     let saves = 0;
     const alwaysConflicting: MissionRepository = {
       get: (id) => inner.get(id),
+      exists: (id) => inner.exists(id),
       save: async (mission) => {
         saves++;
         throw new MissionConcurrencyConflict(mission.id, mission.version, mission.version + 1);

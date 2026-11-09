@@ -33,7 +33,7 @@ describe('LaunchNextWave', () => {
     const result = await launchAt(T0).execute({ missionId });
 
     expect(result).toEqual({ outcome: 'launched', wave: 1, candidateCount: 2 });
-    expect(missions.outbox).toEqual([
+    expect(missions.outbox.map((entry) => entry.event)).toEqual([
       {
         type: 'OfferWaveLaunched',
         missionId,
@@ -72,7 +72,7 @@ describe('LaunchNextWave', () => {
 
     expect(result).toEqual({ outcome: 'unstaffed' });
     expect((await missions.get(missionId)).status).toBe('unstaffed');
-    expect(missions.outbox.map((event) => event.type)).toEqual(['MissionUnstaffed']);
+    expect(missions.outbox.map((entry) => entry.event.type)).toEqual(['MissionUnstaffed']);
   });
 
   it('does nothing once the mission is awarded', async () => {

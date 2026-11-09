@@ -129,16 +129,41 @@ describe('Mission', () => {
     });
 
     it('fixes a 30-minute appointment that must fit in one of the customer slots', () => {
-      const lastHalfHour = new Date('2026-11-16T10:30:00Z');
-      const overflowing = new Date('2026-11-16T10:45:00Z');
-      const between = new Date('2026-11-16T14:00:00Z');
+      const offeredWithin = (slot: TimeSlot) => {
+        const mission = Mission.open({
+          id: MissionId('m-1'),
+          orderId: OrderId('o-1'),
+          requirements: someRequirements({ slots: [slot] }),
+          maxWaves: 3,
+        });
+        mission.launchWave([alice], DEADLINE, T0);
+        return mission;
+      };
+      const nineToTenFortyFive = TimeSlot(new Date('2026-11-16T09:00:00Z'), new Date('2026-11-16T10:45:00Z'));
+      const mustFit = 'The 30-minute appointment must fit in one of the customer slots';
 
-      expect(() => aMissionOfferedTo([alice]).accept(alice, minutesAfterT0(5), overflowing)).toThrow(InvalidAppointment);
-      expect(() => aMissionOfferedTo([alice]).accept(alice, minutesAfterT0(5), between)).toThrow(InvalidAppointment);
+      expect(() => offeredWithin(nineToTenFortyFive).accept(alice, minutesAfterT0(5), new Date('2026-11-16T10:30:00Z'))).toThrow(
+        mustFit,
+      );
+      expect(() => offeredWithin(nineToTenFortyFive).accept(alice, minutesAfterT0(5), new Date('2026-11-16T14:00:00Z'))).toThrow(
+        mustFit,
+      );
 
-      const mission = aMissionOfferedTo([alice]);
-      mission.accept(alice, minutesAfterT0(5), lastHalfHour);
-      expect(mission.appointment).toEqual({ start: lastHalfHour, end: new Date('2026-11-16T11:00:00Z') });
+      const mission = offeredWithin(nineToTenFortyFive);
+      mission.accept(alice, minutesAfterT0(5), new Date('2026-11-16T10:00:00Z'));
+      expect(mission.appointment).toEqual({
+        start: new Date('2026-11-16T10:00:00Z'),
+        end: new Date('2026-11-16T10:30:00Z'),
+      });
+    });
+
+    it('only starts on the hour or half past', () => {
+      const onGrid = 'The appointment must start on the hour or half past';
+
+      expect(() => aMissionOfferedTo([alice]).accept(alice, minutesAfterT0(5), new Date('2026-11-16T09:10:00Z'))).toThrow(onGrid);
+      expect(() => aMissionOfferedTo([alice]).accept(alice, minutesAfterT0(5), new Date('2026-11-16T09:30:20Z'))).toThrow(onGrid);
+      expect(() => aMissionOfferedTo([alice]).accept(alice, minutesAfterT0(5), new Date('2026-11-16T09:00:00Z'))).not.toThrow();
+      expect(() => aMissionOfferedTo([alice]).accept(alice, minutesAfterT0(5), new Date('2026-11-16T09:30:00Z'))).not.toThrow();
     });
 
     it('refuses an appointment that has already begun, even inside a customer slot', () => {

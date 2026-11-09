@@ -227,6 +227,10 @@ export class Mission {
   }
 
   private appointmentAt(start: Date, now: Date): TimeSlot {
+    // Fixed 30-minute grid. Paris and UTC differ by whole hours, so checking UTC minutes is enough.
+    if (start.getTime() % APPOINTMENT_DURATION_MS !== 0) {
+      throw new InvalidAppointment('The appointment must start on the hour or half past (9:00, 9:30…)');
+    }
     const appointment = TimeSlot(start, new Date(start.getTime() + APPOINTMENT_DURATION_MS));
     if (appointment.start <= now) throw new InvalidAppointment('The appointment must be in the future');
     if (!this.state.requirements.slots.some((slot) => isWithin(appointment, slot))) {

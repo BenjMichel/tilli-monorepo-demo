@@ -1,0 +1,9 @@
+{
+  "name": "tilli-monorepo-demo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck"
+  }
+}

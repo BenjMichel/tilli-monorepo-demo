@@ -1,0 +1,4 @@
+packages:
+  - "contexts/*"
+  - "apps/*"
+  - "packages/*"

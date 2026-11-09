@@ -10,6 +10,7 @@
     "@tilli/contracts": "workspace:*",
     "@tilli/dispatch": "workspace:*",
     "@tilli/event-bus": "workspace:*",
+    "@tilli/fulfillment": "workspace:*",
     "@tilli/ordering": "workspace:*",
     "typescript": "^7.0.2",
     "vitest": "^5.1.0"

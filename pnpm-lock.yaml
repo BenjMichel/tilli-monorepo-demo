@@ -93,6 +93,9 @@ importers:
       '@tilli/event-bus':
         specifier: workspace:*
         version: link:../../packages/event-bus
+      '@tilli/fulfillment':
+        specifier: workspace:*
+        version: link:../../contexts/fulfillment
       '@tilli/ordering':
         specifier: workspace:*
         version: link:../../contexts/ordering

@@ -16,6 +16,7 @@ Trouver **un** couturier pour chaque commande, vite et bien. Dispatch décide qu
 | Vague | `OfferWave` | Un lot de propositions envoyées **en parallèle** à plusieurs candidats, avec une échéance commune |
 | Proposition | `Offer` | La sollicitation d'un candidat pour une mission. Statuts : en attente, acceptée, déclinée, retirée, expirée |
 | Attribution | `Award` | Le fait qu'un candidat remporte la mission (premier à accepter) |
+| Rendez-vous | `Appointment` | Les 30 minutes que le couturier choisit en acceptant, dans un créneau du client. Définitif |
 | Mission non pourvue | `Unstaffed` | Toutes les vagues sont épuisées sans acceptation |
 
 Dans ce contexte, « couturier » veut dire **candidat**. Dispatch ne connaît ni son adresse personnelle ni le détail de ses missions passées, seulement ce qui sert à décider.
@@ -31,6 +32,7 @@ Invariants :
 3. Un candidat n'est jamais sollicité deux fois pour la même mission.
 4. Une seule vague active à la fois.
 5. Au-delà de `maxWaves`, la mission passe à `Unstaffed`.
+6. Accepter, c'est aussi choisir le rendez-vous : **30 minutes**, dans le futur, entièrement dans un créneau du client. S'il ne respecte pas ces règles, l'acceptation est refusée et la proposition reste en attente.
 
 Cycle de vie :
 
@@ -97,7 +99,7 @@ Comme c'est le cœur du métier, la sélection est une **policy interchangeable*
 
 | Événement d'intégration | Contenu |
 |---|---|
-| `MissionAwarded` | missionId, orderId, couturierId |
+| `MissionAwarded` | missionId, orderId, couturierId, rendez-vous |
 | `MissionUnstaffed` | missionId, orderId, nombre de vagues |
 
 ## Événements consommés

@@ -1,4 +1,4 @@
-import { CandidateId, type Candidate } from '@tilli/dispatch';
+import { type Candidate, CandidateId } from '@tilli/dispatch';
 import { afterEach, describe, expect, it } from 'vitest';
 import { buildApp } from '../src/http/app';
 import { createPlatform } from '../src/platform';
@@ -62,7 +62,11 @@ describe('Tilli demo API', () => {
     const { app } = api;
 
     const alterations = await app.inject({ url: '/catalog/alterations?garmentType=pants&fabric=dressy' });
-    expect(alterations.json()).toContainEqual({ code: 'hem-simple', label: 'Ourlet simple (x2)', price: { cents: 1700 } });
+    expect(alterations.json()).toContainEqual({
+      code: 'hem-simple',
+      label: 'Ourlet simple (x2)',
+      price: { cents: 1700 },
+    });
 
     const { orderId, totalCents } = await api.placeOrder();
     expect(totalCents).toBe(1700);
@@ -95,7 +99,11 @@ describe('Tilli demo API', () => {
     });
     expect(started.statusCode).toBe(204);
     api.setNow('2026-11-16T10:00:00Z');
-    await app.inject({ method: 'POST', url: `/interventions/${intervention.id}/complete`, payload: { tailorId: 'marie' } });
+    await app.inject({
+      method: 'POST',
+      url: `/interventions/${intervention.id}/complete`,
+      payload: { tailorId: 'marie' },
+    });
 
     const tracking = (await app.inject({ url: '/admin/orders' })).json();
     expect(tracking).toEqual([
@@ -116,7 +124,11 @@ describe('Tilli demo API', () => {
     await api.placeOrder();
     const [offer] = (await api.app.inject({ url: '/tailors/marie/offers' })).json();
     const accept = (tailorId: string, appointmentStart: string) =>
-      api.app.inject({ method: 'POST', url: `/missions/${offer.missionId}/accept`, payload: { tailorId, appointmentStart } });
+      api.app.inject({
+        method: 'POST',
+        url: `/missions/${offer.missionId}/accept`,
+        payload: { tailorId, appointmentStart },
+      });
 
     const offGrid = await accept('marie', '2026-11-16T09:10:00Z');
     expect(offGrid.statusCode).toBe(422);
@@ -133,8 +145,13 @@ describe('Tilli demo API', () => {
 
     expect((await app.inject({ method: 'POST', url: '/quotes', payload: { items: [] } })).statusCode).toBe(400);
     expect(
-      (await app.inject({ method: 'POST', url: '/missions/nope/accept', payload: { tailorId: 'marie', appointmentStart: '2026-11-16T09:00:00Z' } }))
-        .statusCode,
+      (
+        await app.inject({
+          method: 'POST',
+          url: '/missions/nope/accept',
+          payload: { tailorId: 'marie', appointmentStart: '2026-11-16T09:00:00Z' },
+        })
+      ).statusCode,
     ).toBe(404);
     const versailles = await app.inject({
       method: 'POST',
@@ -149,7 +166,11 @@ describe('Tilli demo API', () => {
     const api = anApi();
     const { orderId } = await api.placeOrder();
 
-    const cancelled = await api.app.inject({ method: 'POST', url: `/orders/${orderId}/cancel`, payload: { reason: 'oops' } });
+    const cancelled = await api.app.inject({
+      method: 'POST',
+      url: `/orders/${orderId}/cancel`,
+      payload: { reason: 'oops' },
+    });
 
     expect(cancelled.statusCode).toBe(204);
     expect((await api.app.inject({ url: '/tailors/marie/offers' })).json()).toEqual([]);

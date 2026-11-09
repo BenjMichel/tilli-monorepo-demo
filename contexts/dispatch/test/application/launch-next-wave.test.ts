@@ -7,7 +7,7 @@ import { CandidateId, MissionId, OrderId } from '../../src/domain/ids';
 import { Mission } from '../../src/domain/mission';
 import { InMemoryCandidateRepository } from '../../src/infrastructure/in-memory-candidate-repository';
 import { InMemoryMissionRepository } from '../../src/infrastructure/in-memory-mission-repository';
-import { MONDAY_MORNING, VERSAILLES, aCandidate, someRequirements } from '../fixtures';
+import { aCandidate, MONDAY_MORNING, someRequirements, VERSAILLES } from '../fixtures';
 
 const T0 = new Date('2026-11-16T07:00:00Z');
 const THIRTY_MINUTES = 30 * 60_000;
@@ -18,7 +18,12 @@ async function setUp(candidates: Candidate[], waveSizes = [2, 3]) {
   const policy = new CandidateSelectionPolicy(waveSizes);
   const missions = new InMemoryMissionRepository();
   await missions.save(
-    Mission.open({ id: missionId, orderId: OrderId('o-1'), requirements: someRequirements(), maxWaves: policy.maxWaves }),
+    Mission.open({
+      id: missionId,
+      orderId: OrderId('o-1'),
+      requirements: someRequirements(),
+      maxWaves: policy.maxWaves,
+    }),
   );
   missions.outbox.length = 0;
   const launchAt = (now: Date) =>

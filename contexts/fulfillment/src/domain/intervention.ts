@@ -1,9 +1,10 @@
 import { InvalidTransition, NotAssignedTailor, TooEarlyToStart } from './errors';
-import { type InterventionId, type OrderId, type TailorId, interventionIdForOrder } from './ids';
+import { type InterventionId, interventionIdForOrder, type OrderId, type TailorId } from './ids';
 import type { CustomerContact, InterventionDraft, TimeSlot, WorkItem } from './intervention-draft';
 import type { InterventionEvent } from './intervention-events';
+import type { InterventionStatus } from './intervention-status';
 
-export type InterventionStatus = 'scheduled' | 'in-progress' | 'completed' | 'cancelled';
+export type { InterventionStatus };
 
 export type InterventionSnapshot = {
   readonly id: InterventionId;
@@ -121,7 +122,11 @@ export class Intervention {
   }
 
   private record(event: DistributiveOmit<InterventionEvent, 'interventionId' | 'orderId'>): void {
-    this.pendingEvents.push({ ...event, interventionId: this.state.id, orderId: this.state.orderId } as InterventionEvent);
+    this.pendingEvents.push({
+      ...event,
+      interventionId: this.state.id,
+      orderId: this.state.orderId,
+    } as InterventionEvent);
   }
 }
 

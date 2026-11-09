@@ -1,18 +1,18 @@
 import { IntegrationEvent, type OrderPlacedV1 } from '@tilli/contracts';
 import { InMemoryEventBus } from '@tilli/event-bus';
 import { describe, expect, it } from 'vitest';
-import type { Clock } from '../../src/application/clock';
-import type { WaveTimer } from '../../src/application/ports';
 import {
   CandidateId,
+  createDispatchModule,
   InMemoryCandidateRepository,
   InMemoryMissionRepository,
   MissionId,
   StaticAreaLocator,
-  createDispatchModule,
 } from '../../src';
+import type { Clock } from '../../src/application/clock';
+import type { WaveTimer } from '../../src/application/ports';
 import type { MissionId as MissionIdType } from '../../src/domain/ids';
-import { PARIS_15, aCandidate } from '../fixtures';
+import { aCandidate, PARIS_15 } from '../fixtures';
 
 const T0 = new Date('2026-11-16T07:00:00Z');
 const WAVE_DURATION_MS = 30 * 60_000;
@@ -71,8 +71,15 @@ function aRunningDispatch() {
     bus,
     dispatch,
     scheduled,
+    expiry: (index: number): ScheduledExpiry => {
+      const expiry = scheduled[index];
+      if (!expiry) throw new Error(`No wave expiry scheduled at index ${index}`);
+      return expiry;
+    },
     pendingOffers: async () =>
-      (await missions.get(missionId)).offers.filter((offer) => offer.status === 'pending').map((offer) => offer.candidateId),
+      (await missions.get(missionId)).offers
+        .filter((offer) => offer.status === 'pending')
+        .map((offer) => offer.candidateId),
     status: async () => (await missions.get(missionId)).status,
     /** Moves time to the expiry of a scheduled wave and fires its timer. */
     fireTimer: async (expiry: ScheduledExpiry) => {
@@ -93,7 +100,11 @@ describe('Dispatch, driven by integration events', () => {
     expect(await app.pendingOffers()).toEqual([CandidateId('alice'), CandidateId('bob')]);
     expect(app.scheduled).toEqual([{ missionId, wave: 1, at: new Date(T0.getTime() + WAVE_DURATION_MS) }]);
 
-    await app.dispatch.commands.acceptOffer.execute({ missionId, candidateId: CandidateId('bob'), appointmentStart: MONDAY_9AM });
+    await app.dispatch.commands.acceptOffer.execute({
+      missionId,
+      candidateId: CandidateId('bob'),
+      appointmentStart: MONDAY_9AM,
+    });
     await app.dispatch.relay.run();
 
     const [awarded] = app.publishedBy('MissionAwarded');
@@ -109,11 +120,11 @@ describe('Dispatch, driven by integration events', () => {
     await app.bus.publish(orderPlaced());
     await app.dispatch.relay.run();
 
-    await app.fireTimer(app.scheduled[0]!);
+    await app.fireTimer(app.expiry(0));
     await app.dispatch.relay.run();
     expect(await app.pendingOffers()).toEqual([CandidateId('carol')]);
 
-    await app.fireTimer(app.scheduled[1]!);
+    await app.fireTimer(app.expiry(1));
     await app.dispatch.relay.run();
     expect(await app.status()).toBe('unstaffed');
     expect(app.publishedBy('MissionUnstaffed')).toEqual([
@@ -131,7 +142,7 @@ describe('Dispatch, driven by integration events', () => {
     await app.dispatch.relay.run();
     expect(await app.pendingOffers()).toEqual([CandidateId('carol')]);
 
-    expect(await app.fireTimer(app.scheduled[0]!)).toBe('stale');
+    expect(await app.fireTimer(app.expiry(0))).toBe('stale');
     expect(await app.pendingOffers()).toEqual([CandidateId('carol')]);
   });
 
@@ -150,7 +161,11 @@ describe('Dispatch, driven by integration events', () => {
       expiresAt: new Date(T0.getTime() + WAVE_DURATION_MS),
     });
 
-    await app.dispatch.commands.acceptOffer.execute({ missionId, candidateId: CandidateId('bob'), appointmentStart: MONDAY_9AM });
+    await app.dispatch.commands.acceptOffer.execute({
+      missionId,
+      candidateId: CandidateId('bob'),
+      appointmentStart: MONDAY_9AM,
+    });
     expect(await app.dispatch.queries.pendingOffers.list(CandidateId('alice'))).toEqual([]);
   });
 
@@ -186,7 +201,9 @@ describe('Dispatch, driven by integration events', () => {
 
   it('refuses an order outside the known areas, and a malformed event', async () => {
     const app = aRunningDispatch();
-    const unknownArea = orderPlaced({ address: { street: '1 place d’Armes', postalCode: '78000', city: 'Versailles' } });
+    const unknownArea = orderPlaced({
+      address: { street: '1 place d’Armes', postalCode: '78000', city: 'Versailles' },
+    });
 
     await expect(app.bus.publish(unknownArea)).rejects.toThrow('No known location for postal code 78000');
     await expect(app.dispatch.subscriptions['OrderPlaced.v1']({ ...orderPlaced(), payload: {} })).rejects.toThrow();

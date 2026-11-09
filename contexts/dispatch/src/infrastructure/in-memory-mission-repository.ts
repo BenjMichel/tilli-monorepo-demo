@@ -2,11 +2,7 @@ import type { Clock } from '../application/clock';
 import type { MissionOutbox, OutboxEntry } from '../application/ports';
 import type { CandidateId, MissionId } from '../domain/ids';
 import { Mission, type MissionSnapshot } from '../domain/mission';
-import {
-  MissionConcurrencyConflict,
-  MissionNotFound,
-  type MissionRepository,
-} from '../domain/mission-repository';
+import { MissionConcurrencyConflict, MissionNotFound, type MissionRepository } from '../domain/mission-repository';
 
 const systemClock: Clock = { now: () => new Date() };
 

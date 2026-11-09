@@ -1,18 +1,18 @@
 import { IntegrationEvent, OrderCancelledV1, OrderPlacedV1 } from '@tilli/contracts';
 import { InMemoryEventBus } from '@tilli/event-bus';
 import { describe, expect, it } from 'vitest';
+import {
+  createOrderingModule,
+  DEMO_PRICE_GRID,
+  InMemoryOrderRepository,
+  InMemoryPriceGrids,
+  OrderId,
+  PARIS_SERVICE_AREA,
+} from '../../src';
 import { UnknownPriceGridVersion } from '../../src/application/place-order';
 import { OrderCannotBeCancelled } from '../../src/domain/errors';
 import { Money } from '../../src/domain/money';
 import { PriceGrid } from '../../src/domain/price-grid';
-import {
-  DEMO_PRICE_GRID,
-  InMemoryPriceGrids,
-  InMemoryOrderRepository,
-  OrderId,
-  PARIS_SERVICE_AREA,
-  createOrderingModule,
-} from '../../src';
 import { DRESSY_PANTS_HEM, LEA, MONDAY_MORNING, NOW, PARIS_11_ADDRESS } from '../fixtures';
 
 function aRunningOrdering(grids: PriceGrid[] = [DEMO_PRICE_GRID]) {
@@ -61,7 +61,11 @@ describe('Ordering funnel', () => {
 
   it('keeps the prices of the quote when a new grid is published between the two steps', async () => {
     const newGrid = new PriceGrid('demo-2027-01', [
-      { garmentType: 'pants', alteration: { code: 'hem-simple', label: 'Ourlet simple (x2)' }, prices: { basic: Money(1300), dressy: Money(1800) } },
+      {
+        garmentType: 'pants',
+        alteration: { code: 'hem-simple', label: 'Ourlet simple (x2)' },
+        prices: { basic: Money(1300), dressy: Money(1800) },
+      },
     ]);
     const { bus, ordering } = aRunningOrdering([DEMO_PRICE_GRID, newGrid]);
     expect(ordering.queries.getQuote.execute([DRESSY_PANTS_HEM]).total).toEqual(Money(1800));
@@ -124,7 +128,9 @@ describe('Ordering funnel', () => {
       quotedPriceGridVersion: DEMO_PRICE_GRID.version,
     });
 
-    const startedByTailor = ordering.subscriptions['InterventionStarted.v1'](interventionEvent('InterventionStarted', orderId));
+    const startedByTailor = ordering.subscriptions['InterventionStarted.v1'](
+      interventionEvent('InterventionStarted', orderId),
+    );
     const cancelledByCustomer = ordering.commands.cancelOrder.execute({ orderId, reason: 'customer request' });
 
     const [started, cancelled] = await Promise.allSettled([startedByTailor, cancelledByCustomer]);

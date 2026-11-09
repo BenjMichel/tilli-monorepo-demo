@@ -51,9 +51,9 @@ export function createDispatchModule(deps: DispatchDependencies) {
 }
 
 export type DispatchModule = ReturnType<typeof createDispatchModule>;
-export { CandidateId, MissionId } from './domain/ids';
-export type { Candidate } from './domain/candidate';
 export type { WaveTimer } from './application/ports';
+export type { Candidate } from './domain/candidate';
+export { CandidateId, MissionId } from './domain/ids';
 export { InMemoryCandidateRepository } from './infrastructure/in-memory-candidate-repository';
 export { InMemoryMissionRepository } from './infrastructure/in-memory-mission-repository';
 export { StaticAreaLocator } from './infrastructure/static-area-locator';

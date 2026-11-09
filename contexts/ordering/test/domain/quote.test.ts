@@ -8,7 +8,10 @@ import { DEMO_PRICE_GRID } from '../../src/infrastructure/demo-price-grid';
 describe('quote', () => {
   it('prices an alteration by garment type and fabric', () => {
     const basic = quote([{ garmentType: 'pants', fabric: 'basic', alterationCodes: ['hem-simple'] }], DEMO_PRICE_GRID);
-    const dressy = quote([{ garmentType: 'pants', fabric: 'dressy', alterationCodes: ['hem-simple'] }], DEMO_PRICE_GRID);
+    const dressy = quote(
+      [{ garmentType: 'pants', fabric: 'dressy', alterationCodes: ['hem-simple'] }],
+      DEMO_PRICE_GRID,
+    );
 
     expect(basic.total).toEqual(Money(1200));
     expect(dressy.total).toEqual(Money(1700));
@@ -25,13 +28,18 @@ describe('quote', () => {
 
     expect(result.items.map((item) => item.subtotal.cents)).toEqual([1700 + 2400, 2200]);
     expect(result.total).toEqual(Money(1700 + 2400 + 2200));
-    expect(result.items[0]?.alterations[0]).toEqual({ code: 'hem-simple', label: 'Ourlet simple (x2)', price: Money(1700) });
+    expect(result.items[0]?.alterations[0]).toEqual({
+      code: 'hem-simple',
+      label: 'Ourlet simple (x2)',
+      price: Money(1700),
+    });
   });
 
   it('records the grid version it was computed with', () => {
-    expect(quote([{ garmentType: 'skirt', fabric: 'basic', alterationCodes: ['hem-wide'] }], DEMO_PRICE_GRID).priceGridVersion).toBe(
-      DEMO_PRICE_GRID.version,
-    );
+    expect(
+      quote([{ garmentType: 'skirt', fabric: 'basic', alterationCodes: ['hem-wide'] }], DEMO_PRICE_GRID)
+        .priceGridVersion,
+    ).toBe(DEMO_PRICE_GRID.version);
   });
 
   it('refuses an alteration the grid does not offer for this garment', () => {
@@ -42,9 +50,14 @@ describe('quote', () => {
 
   it('refuses an empty selection, an item without alteration and a duplicated alteration', () => {
     expect(() => quote([], DEMO_PRICE_GRID)).toThrow(InvalidOrder);
-    expect(() => quote([{ garmentType: 'pants', fabric: 'basic', alterationCodes: [] }], DEMO_PRICE_GRID)).toThrow(InvalidOrder);
+    expect(() => quote([{ garmentType: 'pants', fabric: 'basic', alterationCodes: [] }], DEMO_PRICE_GRID)).toThrow(
+      InvalidOrder,
+    );
     expect(() =>
-      quote([{ garmentType: 'pants', fabric: 'basic', alterationCodes: ['hem-simple', 'hem-simple'] }], DEMO_PRICE_GRID),
+      quote(
+        [{ garmentType: 'pants', fabric: 'basic', alterationCodes: ['hem-simple', 'hem-simple'] }],
+        DEMO_PRICE_GRID,
+      ),
     ).toThrow(InvalidOrder);
   });
 });
@@ -62,7 +75,11 @@ describe('PriceGrid', () => {
   });
 
   it('rejects a grid that prices the same alteration twice', () => {
-    const line = { garmentType: 'pants', alteration: { code: 'hem', label: 'Ourlet' }, prices: { basic: Money(1), dressy: Money(2) } };
+    const line = {
+      garmentType: 'pants',
+      alteration: { code: 'hem', label: 'Ourlet' },
+      prices: { basic: Money(1), dressy: Money(2) },
+    };
 
     expect(() => new PriceGrid('broken', [line, line])).toThrow(RangeError);
   });

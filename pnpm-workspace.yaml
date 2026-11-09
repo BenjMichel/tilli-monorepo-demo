@@ -4,5 +4,7 @@ packages:
   - "packages/*"
   - "tests/*"
 allowBuilds:
+  # @swc/core ships its native binary as a per-platform package: no install script needed.
+  "@swc/core": false
   # tsx works with the prebuilt esbuild binary: no install script needed.
   esbuild: false

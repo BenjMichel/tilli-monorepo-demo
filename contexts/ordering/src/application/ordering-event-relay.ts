@@ -15,7 +15,11 @@ export class OrderingEventRelay {
       const envelope = { eventId: id, version: 1 as const, occurredAt: occurredAt.toISOString() };
       switch (event.type) {
         case 'OrderPlaced':
-          await this.publisher.publish({ ...envelope, type: 'OrderPlaced', payload: toOrderPlacedPayload(event.order) });
+          await this.publisher.publish({
+            ...envelope,
+            type: 'OrderPlaced',
+            payload: toOrderPlacedPayload(event.order),
+          });
           break;
         case 'OrderCancelled':
           await this.publisher.publish({
@@ -40,7 +44,10 @@ function toOrderPlacedPayload(order: OrderSnapshot): OrderPlacedV1['payload'] {
     items: order.items.map((item) => ({
       garmentType: item.garmentType,
       fabric: item.fabric,
-      alterations: item.alterations.map((alteration) => ({ code: alteration.code, priceCents: alteration.price.cents })),
+      alterations: item.alterations.map((alteration) => ({
+        code: alteration.code,
+        priceCents: alteration.price.cents,
+      })),
     })),
     address: { ...order.address },
     slots: order.slots.map((slot) => ({ start: slot.start.toISOString(), end: slot.end.toISOString() })),

@@ -1,4 +1,4 @@
-import type { OrderSnapshot } from './order';
+import type { OrderSnapshot } from './order-snapshot';
 
 export type OrderPlaced = {
   readonly type: 'OrderPlaced';

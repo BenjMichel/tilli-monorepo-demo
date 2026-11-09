@@ -37,6 +37,7 @@ Dans le système d'origine, une seule entité `Order` porte plus de 40 états : 
 |---|---|
 | `apps/site` | **Site** client (Vite, React) : le funnel de commande en 2 étapes, qui ne parle qu'à l'API |
 | `apps/admin` | **Admin** ops (Vite, React) : suivi des commandes et annulation, via l'API |
+| `apps/tailor` | **App couturier** (Expo, React Native, react-native-web) : propositions et interventions, sur iOS, Android et le web |
 | `apps/api` | **Composition root** et API HTTP : branche les contextes sur le bus, vide les outbox, projection « Suivi admin » |
 | `infra` | **Infrastructure as code** (OpenTofu) : Cloud Run, Artifact Registry, identité GitHub sans clé |
 | `contexts/ordering` | Bounded context **Ordering** : grille tarifaire, devis, agrégat `Order` |
@@ -157,3 +158,24 @@ L'admin s'ouvre sur `http://localhost:5174` et joint l'API par `/api`, comme le 
 | Annuler | Motif obligatoire, puis commande envoyée à Ordering, qui peut refuser si l'intervention a démarré | `POST /orders/:id/cancel` |
 
 Le bouton « Annuler » n'est qu'un indice tiré de la projection : c'est Ordering qui tranche, et l'admin explique son refus.
+
+## L'app couturier
+
+Une seule base de code React Native (Expo SDK 58) pour iOS, Android et le web : sur le web, `react-native-web` traduit les composants `View`, `Text` et `Pressable` en HTML. L'API étant lancée :
+
+```bash
+pnpm --filter @tilli/tailor web       # navigateur, sur http://localhost:8081
+pnpm --filter @tilli/tailor start     # QR code pour Expo Go, sur un téléphone du même réseau
+pnpm --filter @tilli/tailor build:web # export statique dans apps/tailor/dist
+```
+
+L'app joint l'API par `/api` sur le serveur Metro, qui la relaie vers `http://127.0.0.1:3000` (`metro.config.cjs`, variable `API_URL` pour en changer). Sur un téléphone, elle passe par le même serveur Metro : l'API n'a donc pas besoin de CORS ni d'écouter sur le réseau. Pour une API déployée, `EXPO_PUBLIC_API_URL` remplace le relais.
+
+Sans authentification, le couturier choisit qui il est parmi les quatre couturiers de démo :
+
+| Écran | Ce que voit le couturier | Appels |
+|---|---|---|
+| Propositions | Quartier, vêtements, matières, délai de réponse ; rendez-vous de 30 min à choisir dans les créneaux du client. **Jamais** le client | `GET /tailors/:id/offers`, `POST /missions/:id/accept` ou `/decline` |
+| Mes interventions | Rendez-vous, nom, adresse et téléphone du client, fiche de travail ; démarrer puis terminer | `GET /tailors/:id/interventions`, `POST /interventions/:id/start` puis `/complete` |
+
+Les deux écrans se rafraîchissent toutes les 5 s. Les horaires proposés suivent la règle de Dispatch (à l'heure ou à la demie, dans un créneau, dans le futur), mais c'est Dispatch qui tranche : si un autre couturier a accepté avant, l'app l'explique. Ses tests (Vitest, Testing Library) rendent l'app avec `react-native-web`, le même moteur que la version web.

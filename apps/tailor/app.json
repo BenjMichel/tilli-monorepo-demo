@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "Tilli Atelier",
+    "slug": "tilli-atelier",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tilli.atelier"
+    },
+    "android": {
+      "package": "com.tilli.atelier",
+      "adaptiveIcon": {
+        "backgroundColor": "#F6F2EA",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "output": "single"
+    }
+  }
+}

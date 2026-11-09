@@ -1,10 +1,12 @@
 import { CancelOrder } from './application/cancel-order';
+import { FulfillmentReactions } from './application/fulfillment-reactions';
 import { GetQuote } from './application/get-quote';
 import { OrderingEventRelay } from './application/ordering-event-relay';
 import { PlaceOrder } from './application/place-order';
 import type { Clock, IntegrationEventPublisher, OrderIdGenerator, OrderOutbox, PriceGrids } from './application/ports';
 import type { OrderRepository } from './domain/order-repository';
 import type { ServiceArea } from './domain/service-area';
+import { FulfillmentAcl } from './infrastructure/fulfillment-acl';
 
 export type OrderingDependencies = {
   readonly orders: OrderRepository & OrderOutbox;
@@ -17,7 +19,12 @@ export type OrderingDependencies = {
 
 /** Public surface of the Ordering context, wired by the composition root. */
 export function createOrderingModule(deps: OrderingDependencies) {
+  const fulfillment = new FulfillmentAcl(new FulfillmentReactions(deps.orders));
   return {
+    subscriptions: {
+      'InterventionStarted.v1': fulfillment.onInterventionStarted,
+      'InterventionCompleted.v1': fulfillment.onInterventionCompleted,
+    },
     queries: {
       getQuote: new GetQuote(deps.grids),
     },

@@ -107,11 +107,15 @@ describe('Order', () => {
       expect(() => order.cancel('too late')).toThrow(OrderCannotBeCancelled);
     });
 
-    it('cannot complete a cancelled order', () => {
+    it('stays cancelled when the work of a late-cancelled order is completed anyway', () => {
       const order = aPlacedOrder();
       order.cancel('customer request');
+      order.pullEvents();
 
-      expect(() => order.complete()).toThrow(InvalidOrder);
+      order.complete();
+
+      expect(order.status).toBe('cancelled');
+      expect(order.pullEvents()).toEqual([]);
     });
   });
 });

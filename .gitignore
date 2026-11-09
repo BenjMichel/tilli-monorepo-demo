@@ -12,3 +12,6 @@ coverage/
 !*.tfvars.example
 # Reusable modules do not pin providers: only root configurations commit their lock file.
 infra/modules/**/.terraform.lock.hcl
+
+# Expo
+.expo/

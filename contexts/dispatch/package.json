@@ -7,7 +7,11 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "devDependencies": {
+    "@tilli/event-bus": "workspace:*",
     "typescript": "^7.0.2",
     "vitest": "^5.0.5"
+  },
+  "dependencies": {
+    "@tilli/contracts": "workspace:*"
   }
 }

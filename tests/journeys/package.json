@@ -1,0 +1,17 @@
+{
+  "name": "@tilli/journeys",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@tilli/contracts": "workspace:*",
+    "@tilli/dispatch": "workspace:*",
+    "@tilli/event-bus": "workspace:*",
+    "@tilli/ordering": "workspace:*",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  }
+}

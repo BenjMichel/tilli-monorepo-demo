@@ -62,7 +62,7 @@ L'état « un couturier a accepté » appartient à Dispatch, **pas** à `Order`
 | `InterventionStarted` | Fulfillment | Garde une trace locale qui interdit ensuite l'annulation |
 | `InterventionCompleted` | Fulfillment | `Order` passe à Completed |
 
-Les méthodes correspondantes existent sur `Order` (`recordInterventionStarted`, `complete`). Leur branchement sur le bus viendra avec Fulfillment, qui publiera ces événements.
+L'ACL `FulfillmentAcl` les traduit en `recordInterventionStarted()` et `complete()`. Ce sont des **faits** venus d'un autre contexte : `Order` ne peut pas les refuser. Une commande annulée dont l'intervention avait déjà démarré (les deux messages se sont croisés) reste donc annulée quand `InterventionCompleted` arrive, et c'est Fulfillment qui alerte les ops.
 
 ## Le funnel en deux étapes
 

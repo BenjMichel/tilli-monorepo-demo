@@ -35,6 +35,7 @@ Dans le système d'origine, une seule entité `Order` porte plus de 40 états : 
 |---|---|
 | `contexts/ordering` | Bounded context **Ordering** : grille tarifaire, devis, agrégat `Order` |
 | `contexts/dispatch` | Bounded context **Dispatch** (core domain) : domaine, application, infrastructure |
+| `contexts/fulfillment` | Bounded context **Fulfillment** : agrégat `Intervention`, seul contexte qui voit les coordonnées du client |
 | `tests/journeys` | Parcours **de bout en bout** entre contextes, reliés uniquement par le bus |
 | `packages/contracts` | **Published language** : schémas versionnés des événements d'intégration, seul code partagé entre contextes |
 | `packages/event-bus` | Bus d'événements en mémoire pour le monolithe modulaire |

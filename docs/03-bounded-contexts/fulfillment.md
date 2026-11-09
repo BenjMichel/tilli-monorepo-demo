@@ -45,3 +45,16 @@ Cycle de vie : `Scheduled → AppointmentConfirmed → InProgress → Completed`
 | `OrderCancelled` | Ordering | Annule l'intervention si elle n'a pas démarré |
 
 Fulfillment consomme `OrderPlaced` lui-même au lieu de recevoir le contact client par Dispatch. Dispatch n'a pas à connaître de données personnelles (minimisation RGPD) et ne garde que ce qui sert à décider. Voir [ADR 0003](../adr/0003-integration-par-evenements.md).
+
+## Événements qui se croisent
+
+Les événements de deux contextes n'arrivent pas forcément dans l'ordre. Chaque cas a une réponse explicite :
+
+| Situation | Réaction |
+|---|---|
+| `MissionAwarded` arrive avant `OrderPlaced` | Pas de brouillon : le handler **échoue** et le relais de Dispatch rejoue l'événement plus tard |
+| `MissionAwarded` livré deux fois | L'identifiant d'intervention est dérivé de la commande : **une seule** intervention |
+| `OrderCancelled` arrive avant `MissionAwarded` | Le brouillon est marqué annulé ; l'intervention est créée puis **annulée aussitôt**, et le couturier est prévenu |
+| `OrderCancelled` arrive après le démarrage | Fulfillment ne peut pas défaire un fait : l'intervention **continue** et `LateCancellationReceived` alerte les ops, une seule fois |
+
+Le dernier cas existe parce qu'Ordering n'apprend le démarrage qu'en recevant `InterventionStarted`. Entre les deux, une annulation peut encore être acceptée. Ordering, de son côté, garde alors la commande annulée même quand `InterventionCompleted` arrive.

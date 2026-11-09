@@ -62,6 +62,7 @@ describe('AcceptOffer', () => {
     const alwaysConflicting: MissionRepository = {
       get: (id) => inner.get(id),
       exists: (id) => inner.exists(id),
+      findWithPendingOfferFor: (candidateId) => inner.findWithPendingOfferFor(candidateId),
       save: async (mission) => {
         saves++;
         throw new MissionConcurrencyConflict(mission.id, mission.version, mission.version + 1);

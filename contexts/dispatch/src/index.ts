@@ -6,6 +6,7 @@ import { DispatchEventRelay } from './application/dispatch-event-relay';
 import { ExpireWave } from './application/expire-wave';
 import { LaunchNextWave } from './application/launch-next-wave';
 import { OpenMission } from './application/open-mission';
+import { PendingOffers } from './application/pending-offers';
 import type { IntegrationEventPublisher, MissionOutbox, WaveTimer } from './application/ports';
 import type { CandidateRepository } from './domain/candidate-repository';
 import { CandidateSelectionPolicy } from './domain/candidate-selection-policy';
@@ -42,6 +43,9 @@ export function createDispatchModule(deps: DispatchDependencies) {
       declineOffer: new DeclineOffer(deps.missions),
       expireWave: new ExpireWave(deps.missions, deps.clock),
     },
+    queries: {
+      pendingOffers: new PendingOffers(deps.missions),
+    },
     relay: new DispatchEventRelay(deps.missions, deps.publisher, deps.timer, launchNextWave),
   };
 }
@@ -49,6 +53,7 @@ export function createDispatchModule(deps: DispatchDependencies) {
 export type DispatchModule = ReturnType<typeof createDispatchModule>;
 export { CandidateId, MissionId } from './domain/ids';
 export type { Candidate } from './domain/candidate';
+export type { WaveTimer } from './application/ports';
 export { InMemoryCandidateRepository } from './infrastructure/in-memory-candidate-repository';
 export { InMemoryMissionRepository } from './infrastructure/in-memory-mission-repository';
 export { StaticAreaLocator } from './infrastructure/static-area-locator';

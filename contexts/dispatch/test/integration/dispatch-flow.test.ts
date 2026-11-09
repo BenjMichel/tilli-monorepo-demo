@@ -135,6 +135,25 @@ describe('Dispatch, driven by integration events', () => {
     expect(await app.pendingOffers()).toEqual([CandidateId('carol')]);
   });
 
+  it('lists the pending offers of a tailor with the district only, until the mission is awarded', async () => {
+    const app = aRunningDispatch();
+    await app.bus.publish(orderPlaced());
+    await app.dispatch.relay.run();
+
+    const [offer] = await app.dispatch.queries.pendingOffers.list(CandidateId('alice'));
+    expect(offer).toEqual({
+      missionId,
+      postalCode: '75011',
+      slots: [{ start: new Date('2026-11-16T09:00:00Z'), end: new Date('2026-11-16T11:00:00Z') }],
+      garmentTypes: ['pants'],
+      fabrics: ['dressy'],
+      expiresAt: new Date(T0.getTime() + WAVE_DURATION_MS),
+    });
+
+    await app.dispatch.commands.acceptOffer.execute({ missionId, candidateId: CandidateId('bob'), appointmentStart: MONDAY_9AM });
+    expect(await app.dispatch.queries.pendingOffers.list(CandidateId('alice'))).toEqual([]);
+  });
+
   it('opens a single mission when OrderPlaced is delivered twice', async () => {
     const app = aRunningDispatch();
 

@@ -1,6 +1,6 @@
 import type { Clock } from '../application/clock';
 import type { MissionOutbox, OutboxEntry } from '../application/ports';
-import type { MissionId } from '../domain/ids';
+import type { CandidateId, MissionId } from '../domain/ids';
 import { Mission, type MissionSnapshot } from '../domain/mission';
 import {
   MissionConcurrencyConflict,
@@ -29,6 +29,14 @@ export class InMemoryMissionRepository implements MissionRepository, MissionOutb
 
   async exists(id: MissionId): Promise<boolean> {
     return this.snapshots.has(id);
+  }
+
+  async findWithPendingOfferFor(candidateId: CandidateId): Promise<Mission[]> {
+    return [...this.snapshots.values()]
+      .filter((snapshot) =>
+        snapshot.offers.some((offer) => offer.candidateId === candidateId && offer.status === 'pending'),
+      )
+      .map((snapshot) => Mission.restore(snapshot));
   }
 
   async save(mission: Mission): Promise<void> {

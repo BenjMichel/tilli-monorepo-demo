@@ -1,4 +1,4 @@
-import type { MissionId } from './ids';
+import type { CandidateId, MissionId } from './ids';
 import type { Mission } from './mission';
 
 export interface MissionRepository {
@@ -6,6 +6,9 @@ export interface MissionRepository {
   get(id: MissionId): Promise<Mission>;
 
   exists(id: MissionId): Promise<boolean>;
+
+  /** Missions where this candidate has an offer still waiting for an answer. */
+  findWithPendingOfferFor(candidateId: CandidateId): Promise<Mission[]>;
 
   /**
    * Persists the mission together with its pending events (outbox).

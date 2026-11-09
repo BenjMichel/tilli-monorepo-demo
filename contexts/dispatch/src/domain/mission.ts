@@ -113,6 +113,11 @@ export class Mission {
     return this.state.requirements;
   }
 
+  /** Deadline of the current wave, for the tailor app countdown. */
+  get currentWaveDeadline(): Date | null {
+    return this.state.waves.at(-1)?.expiresAt ?? null;
+  }
+
   get waveCount(): number {
     return this.state.waves.length;
   }

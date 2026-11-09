@@ -61,3 +61,16 @@ L'état « un couturier a accepté » appartient à Dispatch, **pas** à `Order`
 |---|---|---|
 | `InterventionStarted` | Fulfillment | Garde une trace locale qui interdit ensuite l'annulation |
 | `InterventionCompleted` | Fulfillment | `Order` passe à Completed |
+
+Les méthodes correspondantes existent sur `Order` (`recordInterventionStarted`, `complete`). Leur branchement sur le bus viendra avec Fulfillment, qui publiera ces événements.
+
+## Le funnel en deux étapes
+
+| Étape | Use case | Ce qu'il fait |
+|---|---|---|
+| 1. Vêtements et retouches | `GetQuote` | Liste les retouches proposées pour un vêtement et sa matière, puis calcule le devis de la sélection |
+| 2. Coordonnées | `PlaceOrder` | Vérifie la zone, les créneaux et le client, puis crée la commande au prix du devis |
+
+Le client doit payer **le prix affiché à l'étape 1**. `PlaceOrder` reçoit donc la version de grille du devis : si la grille a changé entre les deux étapes, la commande est refusée (`QuoteOutdated`) et le funnel doit recalculer le devis.
+
+L'annulation peut se produire en même temps que le démarrage de l'intervention. Le verrouillage optimiste sur `Order` tranche : si le démarrage est enregistré en premier, l'annulation est **refusée**.

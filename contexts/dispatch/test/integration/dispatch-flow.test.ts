@@ -17,6 +17,7 @@ import { PARIS_15, aCandidate } from '../fixtures';
 const T0 = new Date('2026-11-16T07:00:00Z');
 const WAVE_DURATION_MS = 30 * 60_000;
 const missionId = MissionId('mission-o-1');
+const MONDAY_9AM = new Date('2026-11-16T09:00:00Z');
 
 function orderPlaced(overrides: Partial<OrderPlacedV1['payload']> = {}): OrderPlacedV1 {
   return {
@@ -92,7 +93,7 @@ describe('Dispatch, driven by integration events', () => {
     expect(await app.pendingOffers()).toEqual([CandidateId('alice'), CandidateId('bob')]);
     expect(app.scheduled).toEqual([{ missionId, wave: 1, at: new Date(T0.getTime() + WAVE_DURATION_MS) }]);
 
-    await app.dispatch.commands.acceptOffer.execute({ missionId, candidateId: CandidateId('bob') });
+    await app.dispatch.commands.acceptOffer.execute({ missionId, candidateId: CandidateId('bob'), appointmentStart: MONDAY_9AM });
     await app.dispatch.relay.run();
 
     const [awarded] = app.publishedBy('MissionAwarded');

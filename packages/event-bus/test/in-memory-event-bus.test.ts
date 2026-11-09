@@ -7,7 +7,12 @@ const awarded: MissionAwardedV1 = {
   type: 'MissionAwarded',
   version: 1,
   occurredAt: '2026-11-09T10:00:00Z',
-  payload: { missionId: 'm-1', orderId: 'o-1', tailorId: 'alice' },
+  payload: {
+    missionId: 'm-1',
+    orderId: 'o-1',
+    tailorId: 'alice',
+    appointment: { start: '2026-11-16T09:00:00Z', end: '2026-11-16T09:30:00Z' },
+  },
 };
 
 describe('InMemoryEventBus', () => {

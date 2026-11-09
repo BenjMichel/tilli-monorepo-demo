@@ -1,4 +1,5 @@
 import {
+  InvalidAppointment,
   InvalidWave,
   MissionAlreadyAwarded,
   MissionNotOffering,
@@ -11,6 +12,9 @@ import {
 import type { CandidateId, MissionId, OrderId } from './ids';
 import type { MissionEvent } from './mission-events';
 import { copyRequirements, type MissionRequirements } from './mission-requirements';
+import { TimeSlot, copyTimeSlot, isWithin } from './time-slot';
+
+export const APPOINTMENT_DURATION_MS = 30 * 60_000;
 
 export type MissionStatus = 'open' | 'offering' | 'awarded' | 'unstaffed' | 'closed';
 export type OfferStatus = 'pending' | 'accepted' | 'declined' | 'withdrawn' | 'expired';
@@ -35,6 +39,7 @@ export type MissionSnapshot = {
   waves: OfferWave[];
   offers: Offer[];
   awardedTo: CandidateId | null;
+  appointment: TimeSlot | null;
   readonly version: number;
 };
 
@@ -65,6 +70,7 @@ export class Mission {
       waves: [],
       offers: [],
       awardedTo: null,
+      appointment: null,
       version: 0,
     });
     mission.record({ type: 'MissionOpened', missionId: params.id, orderId: params.orderId });
@@ -89,6 +95,10 @@ export class Mission {
 
   get awardedTo(): CandidateId | null {
     return this.state.awardedTo;
+  }
+
+  get appointment(): TimeSlot | null {
+    return this.state.appointment;
   }
 
   get version(): number {
@@ -147,7 +157,11 @@ export class Mission {
     this.record({ type: 'OfferWaveLaunched', missionId: this.state.id, wave, candidateIds: [...candidateIds], expiresAt });
   }
 
-  accept(candidateId: CandidateId, now: Date): void {
+  /**
+   * The tailor accepts and, in the same gesture, picks a 30-minute appointment inside one of
+   * the customer's slots. The appointment is final.
+   */
+  accept(candidateId: CandidateId, now: Date, appointmentStart: Date): void {
     if (this.state.status === 'awarded') {
       // A retry from the winner is harmless; any other acceptance comes too late.
       if (this.state.awardedTo === candidateId) return;
@@ -155,16 +169,19 @@ export class Mission {
     }
     const offer = this.pendingOfferOf(candidateId);
     if (now >= this.currentWave().expiresAt) throw new OfferExpired(candidateId);
+    const appointment = this.appointmentAt(appointmentStart, now);
 
     offer.status = 'accepted';
     const withdrawn = this.withdrawPendingOffers();
     this.state.status = 'awarded';
     this.state.awardedTo = candidateId;
+    this.state.appointment = appointment;
     this.record({
       type: 'MissionAwarded',
       missionId: this.state.id,
       orderId: this.state.orderId,
       candidateId,
+      appointment,
       withdrawnCandidateIds: withdrawn,
     });
   }
@@ -207,6 +224,15 @@ export class Mission {
     const withdrawn = this.withdrawPendingOffers();
     this.state.status = 'closed';
     this.record({ type: 'MissionClosed', missionId: this.state.id, withdrawnCandidateIds: withdrawn });
+  }
+
+  private appointmentAt(start: Date, now: Date): TimeSlot {
+    const appointment = TimeSlot(start, new Date(start.getTime() + APPOINTMENT_DURATION_MS));
+    if (appointment.start <= now) throw new InvalidAppointment('The appointment must be in the future');
+    if (!this.state.requirements.slots.some((slot) => isWithin(appointment, slot))) {
+      throw new InvalidAppointment('The 30-minute appointment must fit in one of the customer slots');
+    }
+    return appointment;
   }
 
   private assertActive(): void {
@@ -269,6 +295,7 @@ function copyOf(snapshot: MissionSnapshot): MissionSnapshot {
   return {
     ...snapshot,
     requirements: copyRequirements(snapshot.requirements),
+    appointment: snapshot.appointment && copyTimeSlot(snapshot.appointment),
     waves: snapshot.waves.map((wave) => ({ ...wave, expiresAt: new Date(wave.expiresAt) })),
     offers: snapshot.offers.map((offer) => ({ ...offer })),
   };

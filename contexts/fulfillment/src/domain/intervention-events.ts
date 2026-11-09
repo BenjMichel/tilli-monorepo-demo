@@ -1,12 +1,12 @@
 import type { InterventionId, OrderId, TailorId } from './ids';
+import type { TimeSlot } from './intervention-draft';
 
 type Base = { readonly interventionId: InterventionId; readonly orderId: OrderId };
 
-export type InterventionScheduled = Base & { readonly type: 'InterventionScheduled'; readonly tailorId: TailorId };
-export type AppointmentConfirmed = Base & {
-  readonly type: 'AppointmentConfirmed';
-  readonly start: Date;
-  readonly end: Date;
+export type InterventionScheduled = Base & {
+  readonly type: 'InterventionScheduled';
+  readonly tailorId: TailorId;
+  readonly appointment: TimeSlot;
 };
 export type InterventionStarted = Base & { readonly type: 'InterventionStarted'; readonly startedAt: Date };
 export type InterventionCompleted = Base & { readonly type: 'InterventionCompleted'; readonly completedAt: Date };
@@ -16,7 +16,6 @@ export type LateCancellationReceived = Base & { readonly type: 'LateCancellation
 
 export type InterventionEvent =
   | InterventionScheduled
-  | AppointmentConfirmed
   | InterventionStarted
   | InterventionCompleted
   | InterventionCancelled

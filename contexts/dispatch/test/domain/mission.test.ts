@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  InvalidAppointment,
   InvalidWave,
   MissionAlreadyAwarded,
   MissionNotOffering,
@@ -11,7 +12,10 @@ import {
 } from '../../src/domain/errors';
 import { CandidateId, MissionId, OrderId } from '../../src/domain/ids';
 import { Mission } from '../../src/domain/mission';
-import { someRequirements } from '../fixtures';
+import { TimeSlot } from '../../src/domain/time-slot';
+import { MONDAY_MORNING, someRequirements } from '../fixtures';
+
+const APPOINTMENT = MONDAY_MORNING.start;
 
 const T0 = new Date('2026-11-02T09:00:00Z');
 const minutesAfterT0 = (minutes: number) => new Date(T0.getTime() + minutes * 60_000);
@@ -105,7 +109,7 @@ describe('Mission', () => {
     it('awards the mission to the first candidate who accepts and withdraws the other offers', () => {
       const mission = aMissionOfferedTo([alice, bob, carol]);
 
-      mission.accept(bob, minutesAfterT0(5));
+      mission.accept(bob, minutesAfterT0(5), APPOINTMENT);
 
       expect(mission.status).toBe('awarded');
       expect(mission.awardedTo).toBe(bob);
@@ -113,24 +117,66 @@ describe('Mission', () => {
       expect(statusOf(mission, bob)).toBe('accepted');
       expect(statusOf(mission, carol)).toBe('withdrawn');
       expect(mission.pullEvents()).toEqual([
-        { type: 'MissionAwarded', missionId: 'm-1', orderId: 'o-1', candidateId: bob, withdrawnCandidateIds: [alice, carol] },
+        {
+          type: 'MissionAwarded',
+          missionId: 'm-1',
+          orderId: 'o-1',
+          candidateId: bob,
+          appointment: { start: APPOINTMENT, end: new Date('2026-11-16T09:30:00Z') },
+          withdrawnCandidateIds: [alice, carol],
+        },
       ]);
+    });
+
+    it('fixes a 30-minute appointment that must fit in one of the customer slots', () => {
+      const lastHalfHour = new Date('2026-11-16T10:30:00Z');
+      const overflowing = new Date('2026-11-16T10:45:00Z');
+      const between = new Date('2026-11-16T14:00:00Z');
+
+      expect(() => aMissionOfferedTo([alice]).accept(alice, minutesAfterT0(5), overflowing)).toThrow(InvalidAppointment);
+      expect(() => aMissionOfferedTo([alice]).accept(alice, minutesAfterT0(5), between)).toThrow(InvalidAppointment);
+
+      const mission = aMissionOfferedTo([alice]);
+      mission.accept(alice, minutesAfterT0(5), lastHalfHour);
+      expect(mission.appointment).toEqual({ start: lastHalfHour, end: new Date('2026-11-16T11:00:00Z') });
+    });
+
+    it('refuses an appointment that has already begun, even inside a customer slot', () => {
+      const slotAroundNow = TimeSlot(minutesAfterT0(-60), minutesAfterT0(120));
+      const mission = Mission.open({
+        id: MissionId('m-1'),
+        orderId: OrderId('o-1'),
+        requirements: someRequirements({ slots: [slotAroundNow] }),
+        maxWaves: 3,
+      });
+      mission.launchWave([alice], DEADLINE, T0);
+
+      expect(() => mission.accept(alice, minutesAfterT0(5), T0)).toThrow('The appointment must be in the future');
+    });
+
+    it('keeps the offer pending when the appointment is refused, so the tailor can pick another one', () => {
+      const mission = aMissionOfferedTo([alice]);
+
+      expect(() => mission.accept(alice, minutesAfterT0(5), new Date('2026-11-16T14:00:00Z'))).toThrow(InvalidAppointment);
+
+      expect(mission.status).toBe('offering');
+      expect(statusOf(mission, alice)).toBe('pending');
     });
 
     it('turns down a second acceptance: the mission is already awarded', () => {
       const mission = aMissionOfferedTo([alice, bob]);
-      mission.accept(alice, minutesAfterT0(5));
+      mission.accept(alice, minutesAfterT0(5), APPOINTMENT);
 
-      expect(() => mission.accept(bob, minutesAfterT0(5))).toThrow(MissionAlreadyAwarded);
+      expect(() => mission.accept(bob, minutesAfterT0(5), APPOINTMENT)).toThrow(MissionAlreadyAwarded);
       expect(mission.awardedTo).toBe(alice);
     });
 
     it('treats a repeated acceptance from the winner as a no-op', () => {
       const mission = aMissionOfferedTo([alice, bob]);
-      mission.accept(alice, minutesAfterT0(5));
+      mission.accept(alice, minutesAfterT0(5), APPOINTMENT);
       mission.pullEvents();
 
-      mission.accept(alice, minutesAfterT0(6));
+      mission.accept(alice, minutesAfterT0(6), APPOINTMENT);
 
       expect(mission.awardedTo).toBe(alice);
       expect(mission.pullEvents()).toEqual([]);
@@ -139,21 +185,21 @@ describe('Mission', () => {
     it('refuses an acceptance once the wave deadline has passed', () => {
       const mission = aMissionOfferedTo([alice]);
 
-      expect(() => mission.accept(alice, DEADLINE)).toThrow(OfferExpired);
+      expect(() => mission.accept(alice, DEADLINE, APPOINTMENT)).toThrow(OfferExpired);
       expect(mission.status).toBe('offering');
     });
 
     it('refuses a candidate who was not solicited', () => {
       const mission = aMissionOfferedTo([alice]);
 
-      expect(() => mission.accept(dave, minutesAfterT0(5))).toThrow(OfferNotFound);
+      expect(() => mission.accept(dave, minutesAfterT0(5), APPOINTMENT)).toThrow(OfferNotFound);
     });
 
     it('refuses an offer the candidate already declined', () => {
       const mission = aMissionOfferedTo([alice, bob]);
       mission.decline(alice);
 
-      expect(() => mission.accept(alice, minutesAfterT0(5))).toThrow(OfferNotPending);
+      expect(() => mission.accept(alice, minutesAfterT0(5), APPOINTMENT)).toThrow(OfferNotPending);
     });
   });
 
@@ -215,7 +261,7 @@ describe('Mission', () => {
 
     it('ignores a late timer once the mission is awarded', () => {
       const mission = aMissionOfferedTo([alice]);
-      mission.accept(alice, minutesAfterT0(5));
+      mission.accept(alice, minutesAfterT0(5), APPOINTMENT);
       mission.pullEvents();
 
       mission.expireWave(DEADLINE);
@@ -260,7 +306,7 @@ describe('Mission', () => {
 
     it('leaves an awarded mission untouched', () => {
       const mission = aMissionOfferedTo([alice]);
-      mission.accept(alice, minutesAfterT0(5));
+      mission.accept(alice, minutesAfterT0(5), APPOINTMENT);
       mission.pullEvents();
 
       mission.close();
@@ -275,7 +321,7 @@ describe('Mission', () => {
       const mission = aMissionOfferedTo([alice, bob]);
       const copy = Mission.restore(mission.toSnapshot());
 
-      copy.accept(alice, minutesAfterT0(5));
+      copy.accept(alice, minutesAfterT0(5), APPOINTMENT);
 
       expect(copy.status).toBe('awarded');
       expect(mission.status).toBe('offering');

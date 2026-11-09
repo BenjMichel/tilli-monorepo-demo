@@ -1,6 +1,5 @@
 import type { InterventionId, TailorId } from '../domain/ids';
 import type { Intervention } from '../domain/intervention';
-import type { TimeSlot } from '../domain/intervention-draft';
 import type { InterventionRepository } from '../domain/intervention-repository';
 import type { Clock } from './ports';
 import { retryOnConflict } from './retry-on-conflict';
@@ -14,12 +13,6 @@ export class TailorActions {
     private readonly clock: Clock,
     private readonly maxAttempts = 3,
   ) {}
-
-  confirmAppointment(command: TailorCommand & { readonly slot: TimeSlot }): Promise<void> {
-    return this.apply(command.interventionId, (intervention) =>
-      intervention.confirmAppointment(command.tailorId, command.slot),
-    );
-  }
 
   start(command: TailorCommand): Promise<void> {
     return this.apply(command.interventionId, (intervention) => intervention.start(command.tailorId, this.clock.now()));

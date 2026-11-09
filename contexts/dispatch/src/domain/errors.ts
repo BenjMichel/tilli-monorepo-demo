@@ -66,6 +66,10 @@ export class WaveNotYetExpired extends DispatchError {
   }
 }
 
+export class InvalidAppointment extends DispatchError {
+  readonly code = 'INVALID_APPOINTMENT';
+}
+
 export class InvalidWave extends DispatchError {
   readonly code = 'INVALID_WAVE';
 }

@@ -23,7 +23,6 @@ export type InterventionDraft = {
   readonly orderId: OrderId;
   readonly customer: CustomerContact;
   readonly workSheet: readonly WorkItem[];
-  readonly proposedSlots: readonly TimeSlot[];
   /** The order was cancelled before any tailor was awarded the mission. */
   readonly cancelled: boolean;
 };

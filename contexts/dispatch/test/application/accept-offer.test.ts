@@ -4,7 +4,7 @@ import type { Clock } from '../../src/application/clock';
 import { MissionAlreadyAwarded } from '../../src/domain/errors';
 import { CandidateId, MissionId, OrderId } from '../../src/domain/ids';
 import { Mission } from '../../src/domain/mission';
-import { someRequirements } from '../fixtures';
+import { MONDAY_MORNING, someRequirements } from '../fixtures';
 import { MissionConcurrencyConflict, type MissionRepository } from '../../src/domain/mission-repository';
 import { InMemoryMissionRepository } from '../../src/infrastructure/in-memory-mission-repository';
 
@@ -30,8 +30,8 @@ describe('AcceptOffer', () => {
     const acceptOffer = new AcceptOffer(repository, fixedClock(T0));
 
     const [aliceResult, bobResult] = await Promise.allSettled([
-      acceptOffer.execute({ missionId, candidateId: alice }),
-      acceptOffer.execute({ missionId, candidateId: bob }),
+      acceptOffer.execute({ missionId, candidateId: alice, appointmentStart: MONDAY_MORNING.start }),
+      acceptOffer.execute({ missionId, candidateId: bob, appointmentStart: MONDAY_MORNING.start }),
     ]);
 
     expect(aliceResult.status).toBe('fulfilled');
@@ -48,8 +48,8 @@ describe('AcceptOffer', () => {
     const withoutRetry = new AcceptOffer(repository, fixedClock(T0), 1);
 
     const [, bobResult] = await Promise.allSettled([
-      withoutRetry.execute({ missionId, candidateId: alice }),
-      withoutRetry.execute({ missionId, candidateId: bob }),
+      withoutRetry.execute({ missionId, candidateId: alice, appointmentStart: MONDAY_MORNING.start }),
+      withoutRetry.execute({ missionId, candidateId: bob, appointmentStart: MONDAY_MORNING.start }),
     ]);
 
     expect(bobResult.status === 'rejected' && bobResult.reason).toBeInstanceOf(MissionConcurrencyConflict);
@@ -69,7 +69,7 @@ describe('AcceptOffer', () => {
     };
 
     await expect(
-      new AcceptOffer(alwaysConflicting, fixedClock(T0), 3).execute({ missionId, candidateId: alice }),
+      new AcceptOffer(alwaysConflicting, fixedClock(T0), 3).execute({ missionId, candidateId: alice, appointmentStart: MONDAY_MORNING.start }),
     ).rejects.toThrow(MissionConcurrencyConflict);
     expect(saves).toBe(3);
   });

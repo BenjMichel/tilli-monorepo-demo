@@ -8,7 +8,7 @@ import {
   createFulfillmentModule,
 } from '../../src';
 import { DraftNotFound } from '../../src/application/upstream-reactions';
-import { KARIM, MARIE, MONDAY_MORNING } from '../fixtures';
+import { APPOINTMENT, KARIM, MARIE, MONDAY_MORNING } from '../fixtures';
 
 const interventionId = InterventionId('intervention-o-1');
 
@@ -33,7 +33,12 @@ const missionAwarded = (tailorId: string): MissionAwardedV1 => ({
   type: 'MissionAwarded',
   version: 1,
   occurredAt: '2026-11-09T10:05:00Z',
-  payload: { missionId: 'mission-o-1', orderId: 'o-1', tailorId },
+  payload: {
+    missionId: 'mission-o-1',
+    orderId: 'o-1',
+    tailorId,
+    appointment: { start: APPOINTMENT.start.toISOString(), end: APPOINTMENT.end.toISOString() },
+  },
 });
 
 const orderCancelled = {
@@ -45,7 +50,7 @@ const orderCancelled = {
 };
 
 function aRunningFulfillment() {
-  let now = MONDAY_MORNING.start;
+  let now = APPOINTMENT.start;
   const bus = new InMemoryEventBus();
   const interventions = new InMemoryInterventionRepository({ now: () => now });
   const fulfillment = createFulfillmentModule({
@@ -78,7 +83,6 @@ describe('Fulfillment, driven by integration events', () => {
     expect(mine).toMatchObject({ id: interventionId, status: 'scheduled', customer: { fullName: 'Léa Martin', phone: '+33600000000' } });
     expect(await app.fulfillment.queries.myInterventions.list(KARIM)).toEqual([]);
 
-    await app.fulfillment.commands.confirmAppointment({ interventionId, tailorId: MARIE, slot: MONDAY_MORNING });
     await app.fulfillment.commands.start({ interventionId, tailorId: MARIE });
     app.setNow(new Date('2026-11-16T10:30:00Z'));
     await app.fulfillment.commands.complete({ interventionId, tailorId: MARIE });
@@ -88,7 +92,7 @@ describe('Fulfillment, driven by integration events', () => {
     expect(InterventionStartedV1.parse(published[0]).payload).toEqual({
       interventionId: 'intervention-o-1',
       orderId: 'o-1',
-      startedAt: '2026-11-16T09:00:00.000Z',
+      startedAt: '2026-11-16T09:30:00.000Z',
     });
     expect(InterventionCompletedV1.parse(published[1]).payload.completedAt).toBe('2026-11-16T10:30:00.000Z');
   });
@@ -127,7 +131,6 @@ describe('Fulfillment, driven by integration events', () => {
     const app = aRunningFulfillment();
     await app.bus.publish(orderPlaced);
     await app.bus.publish(missionAwarded('marie'));
-    await app.fulfillment.commands.confirmAppointment({ interventionId, tailorId: MARIE, slot: MONDAY_MORNING });
     await app.fulfillment.commands.start({ interventionId, tailorId: MARIE });
 
     await app.bus.publish(orderCancelled);

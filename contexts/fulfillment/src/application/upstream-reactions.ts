@@ -1,6 +1,6 @@
 import { type OrderId, type TailorId, interventionIdForOrder } from '../domain/ids';
 import { Intervention } from '../domain/intervention';
-import type { InterventionDraft, InterventionDraftRepository } from '../domain/intervention-draft';
+import type { InterventionDraft, InterventionDraftRepository, TimeSlot } from '../domain/intervention-draft';
 import type { InterventionRepository } from '../domain/intervention-repository';
 import { retryOnConflict } from './retry-on-conflict';
 
@@ -29,12 +29,12 @@ export class UpstreamReactions {
    * MissionAwarded. Events from two contexts may arrive in any order: without a draft we fail,
    * so that the relay of the publisher delivers the event again later.
    */
-  async missionAwarded(orderId: OrderId, tailorId: TailorId): Promise<'scheduled' | 'already-scheduled'> {
+  async missionAwarded(orderId: OrderId, tailorId: TailorId, appointment: TimeSlot): Promise<'scheduled' | 'already-scheduled'> {
     if (await this.interventions.exists(interventionIdForOrder(orderId))) return 'already-scheduled';
     const draft = await this.drafts.find(orderId);
     if (!draft) throw new DraftNotFound(orderId);
 
-    await this.interventions.save(Intervention.schedule(draft, tailorId));
+    await this.interventions.save(Intervention.schedule(draft, tailorId, appointment));
     return 'scheduled';
   }
 

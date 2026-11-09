@@ -26,14 +26,6 @@ export class InvalidTransition extends FulfillmentError {
   }
 }
 
-export class SlotNotProposed extends FulfillmentError {
-  readonly code = 'SLOT_NOT_PROPOSED';
-
-  constructor() {
-    super('The appointment must be one of the slots proposed by the customer');
-  }
-}
-
 export class TooEarlyToStart extends FulfillmentError {
   readonly code = 'TOO_EARLY_TO_START';
 

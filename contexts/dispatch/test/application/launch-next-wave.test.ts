@@ -7,7 +7,7 @@ import { CandidateId, MissionId, OrderId } from '../../src/domain/ids';
 import { Mission } from '../../src/domain/mission';
 import { InMemoryCandidateRepository } from '../../src/infrastructure/in-memory-candidate-repository';
 import { InMemoryMissionRepository } from '../../src/infrastructure/in-memory-mission-repository';
-import { VERSAILLES, aCandidate, someRequirements } from '../fixtures';
+import { MONDAY_MORNING, VERSAILLES, aCandidate, someRequirements } from '../fixtures';
 
 const T0 = new Date('2026-11-16T07:00:00Z');
 const THIRTY_MINUTES = 30 * 60_000;
@@ -79,7 +79,7 @@ describe('LaunchNextWave', () => {
     const { missions, launchAt } = await setUp([aCandidate('alice'), aCandidate('bob'), aCandidate('carol')]);
     await launchAt(T0).execute({ missionId });
     const mission = await missions.get(missionId);
-    mission.accept(CandidateId('alice'), T0);
+    mission.accept(CandidateId('alice'), T0, MONDAY_MORNING.start);
     await missions.save(mission);
 
     expect(await launchAt(T0).execute({ missionId })).toEqual({ outcome: 'not-needed' });

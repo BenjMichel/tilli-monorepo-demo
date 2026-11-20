@@ -29,7 +29,7 @@ Dans le système d'origine, une seule entité `Order` porte plus de 40 états : 
 | Sous-domaines | [docs/02-subdomains.md](docs/02-subdomains.md) |
 | Bounded contexts | [Ordering](docs/03-bounded-contexts/ordering.md) · [Dispatch](docs/03-bounded-contexts/dispatch.md) · [Fulfillment](docs/03-bounded-contexts/fulfillment.md) |
 | Context map | [docs/04-context-map.md](docs/04-context-map.md) |
-| Décisions | [docs/adr/](docs/adr/) |
+| Décisions | [docs/adr/](docs/adr/), dont la [persistance PostgreSQL](docs/adr/0007-persistance-postgresql.md) |
 
 ## Structure et commandes
 
@@ -78,7 +78,7 @@ docker run -p 8080:8080 tilli-api
 |---|---|
 | `modules/cloud-run-service` | Service Cloud Run avec sa propre identité, sondes `/health`, accès public optionnel |
 | `modules/github-deployer` | Workload Identity Federation : seul `main` de ce dépôt obtient des identifiants, sans clé stockée ; droits limités à une ressource chacun |
-| `envs/demo` | Environnement de démo à Paris (`europe-west9`) : **une seule instance**, car l'état est en mémoire |
+| `envs/demo` | Environnement de démo à Paris (`europe-west9`) : **une seule instance**, car l'état est en mémoire et le relais d'outbox ne sait pas encore se partager entre instances |
 
 Rien n'est déployé : la CI valide la configuration, la **teste avec `tofu test` sur un provider simulé** (aucun identifiant nécessaire), puis la passe à tflint et à trivy. Pour un vrai déploiement, il faudrait un projet GCP, un bucket pour l'état, et :
 
@@ -95,7 +95,7 @@ tofu plan
 pnpm --filter @tilli/api start
 ```
 
-L'API écoute sur `http://127.0.0.1:3000`. Tout est en mémoire et quatre couturiers de démo sont créés au démarrage (`marie`, `karim`, `sofia`, `lucas`). Il n'y a pas d'authentification : l'identifiant du couturier passe dans la requête.
+L'API écoute sur `http://127.0.0.1:3000`. Par défaut, tout est en mémoire (voir [PostgreSQL](#postgresql) pour persister) et quatre couturiers de démo sont créés au démarrage (`marie`, `karim`, `sofia`, `lucas`). Il n'y a pas d'authentification : l'identifiant du couturier passe dans la requête.
 
 | Interface | Route | Rôle |
 |---|---|---|
@@ -122,6 +122,26 @@ curl -s -X POST localhost:3000/orders -H 'content-type: application/json' -d '{
 }'
 curl -s localhost:3000/tailors/marie/offers
 ```
+
+## PostgreSQL
+
+Avec `DATABASE_URL`, l'API garde son état dans PostgreSQL ([ADR 0007](docs/adr/0007-persistance-postgresql.md)) et applique les migrations au démarrage :
+
+```bash
+docker compose up -d   # PostgreSQL 18 sur 127.0.0.1:5432
+DATABASE_URL=postgres://tilli:tilli@127.0.0.1:5432/tilli pnpm --filter @tilli/api start
+```
+
+| Schéma | Propriétaire | Tables |
+|---|---|---|
+| `ordering` | Ordering | `orders`, `outbox` |
+| `dispatch` | Dispatch | `missions`, `outbox`, `wave_timers` |
+| `fulfillment` | Fulfillment, seul à stocker les coordonnées du client | `interventions`, `intervention_drafts`, `outbox` |
+| `admin` | Projection « Suivi admin », reconstructible | `order_tracking` |
+
+Chaque contexte possède son schéma, ses migrations et ses adapters (`src/infrastructure/postgres/`) ; aucune requête ne traverse deux schémas. Un agrégat est stocké en snapshot `jsonb` avec une colonne `version` (verrouillage optimiste), et ses événements sont écrits dans l'outbox de la même transaction. Les minuteurs de vagues sont en table et l'API les interroge toutes les 2 s : une mission en attente expire même après un redémarrage. Les couturiers restent ceux du seed.
+
+Les tests n'ont pas besoin de serveur : ils passent par **PGlite**, PostgreSQL compilé en WebAssembly. Les mêmes tests de contrat valident l'implémentation en mémoire et PostgreSQL de chaque repository, et un parcours complet redémarre l'API trois fois sur la même base.
 
 ## Le site
 

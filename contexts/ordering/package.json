@@ -11,6 +11,7 @@
     "@tilli/contracts": "workspace:*"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.17",
     "@tilli/event-bus": "workspace:*",
     "typescript": "^7.0.2",
     "vitest": "^5.1.0"

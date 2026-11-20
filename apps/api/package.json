@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "start": "tsx src/server.ts",
-    "build": "esbuild src/server.ts --bundle --platform=node --target=node24 --format=esm --outfile=dist/server.mjs --banner:js=\"import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);\"",
+    "build": "esbuild src/server.ts --bundle --platform=node --target=node24 --format=esm --outfile=dist/server.mjs --external:pg-native --banner:js=\"import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);\"",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json"
   },
@@ -15,10 +15,13 @@
     "@tilli/fulfillment": "workspace:*",
     "@tilli/ordering": "workspace:*",
     "fastify": "^5.12.8",
+    "pg": "^8.23.1",
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.17",
     "@types/node": "^24.19.2",
+    "@types/pg": "^8.23.1",
     "esbuild": "0.28.2",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",

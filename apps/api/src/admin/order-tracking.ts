@@ -28,59 +28,87 @@ const RANK: Record<TrackingStatus, number> = {
   cancelled: 4,
 };
 
+/** Where the projection keeps its rows: in memory for the demo, in PostgreSQL otherwise. */
+export interface OrderTrackingStore {
+  find(orderId: string): Promise<OrderTrackingRow | null>;
+  save(row: OrderTrackingRow): Promise<void>;
+  /** Most recent orders first; rows whose OrderPlaced has not arrived yet come last. */
+  list(): Promise<OrderTrackingRow[]>;
+}
+
 /**
  * "Suivi des commandes" for the ops team. Not a bounded context: a denormalised read model
  * fed by the integration events of the three contexts, with no business rule of its own.
  * Every update is idempotent, so a redelivered event changes nothing.
  */
 export class OrderTrackingProjection {
-  private readonly rows = new Map<string, OrderTrackingRow>();
+  constructor(private readonly store: OrderTrackingStore = new InMemoryOrderTrackingStore()) {}
 
   readonly apply = async (event: IntegrationEvent): Promise<void> => {
-    const row = this.rowOf(event.payload.orderId);
+    const row = (await this.store.find(event.payload.orderId)) ?? emptyRow(event.payload.orderId);
     switch (event.type) {
       case 'OrderPlaced':
         row.placedAt = event.occurredAt;
         row.postalCode = event.payload.address.postalCode;
         row.totalCents = event.payload.totalCents;
-        return;
+        break;
       case 'MissionAwarded':
         row.tailorId = event.payload.tailorId;
         row.appointment = event.payload.appointment;
-        return this.moveTo(row, 'tailor-assigned');
+        moveTo(row, 'tailor-assigned');
+        break;
       case 'MissionUnstaffed':
-        return this.moveTo(row, 'unstaffed');
+        moveTo(row, 'unstaffed');
+        break;
       case 'InterventionStarted':
-        return this.moveTo(row, 'in-progress');
+        moveTo(row, 'in-progress');
+        break;
       case 'InterventionCompleted':
-        return this.moveTo(row, 'completed');
+        moveTo(row, 'completed');
+        break;
       case 'OrderCancelled':
-        return this.moveTo(row, 'cancelled');
+        moveTo(row, 'cancelled');
+        break;
     }
+    await this.store.save(row);
   };
 
-  list(): OrderTrackingRow[] {
-    return [...this.rows.values()].sort((a, b) => (b.placedAt ?? '').localeCompare(a.placedAt ?? ''));
+  list(): Promise<OrderTrackingRow[]> {
+    return this.store.list();
+  }
+}
+
+export class InMemoryOrderTrackingStore implements OrderTrackingStore {
+  private readonly rows = new Map<string, OrderTrackingRow>();
+
+  async find(orderId: string): Promise<OrderTrackingRow | null> {
+    const row = this.rows.get(orderId);
+    return row ? { ...row } : null;
   }
 
-  private rowOf(orderId: string): OrderTrackingRow {
-    let row = this.rows.get(orderId);
-    if (!row) {
-      row = {
-        orderId,
-        placedAt: null,
-        postalCode: null,
-        totalCents: null,
-        status: 'searching-tailor',
-        tailorId: null,
-        appointment: null,
-      };
-      this.rows.set(orderId, row);
-    }
-    return row;
+  async save(row: OrderTrackingRow): Promise<void> {
+    this.rows.set(row.orderId, { ...row });
   }
 
-  private moveTo(row: OrderTrackingRow, status: TrackingStatus): void {
-    if (RANK[status] >= RANK[row.status]) row.status = status;
+  async list(): Promise<OrderTrackingRow[]> {
+    return [...this.rows.values()]
+      .map((row) => ({ ...row }))
+      .sort((a, b) => (b.placedAt ?? '').localeCompare(a.placedAt ?? ''));
   }
+}
+
+function emptyRow(orderId: string): OrderTrackingRow {
+  return {
+    orderId,
+    placedAt: null,
+    postalCode: null,
+    totalCents: null,
+    status: 'searching-tailor',
+    tailorId: null,
+    appointment: null,
+  };
+}
+
+function moveTo(row: OrderTrackingRow, status: TrackingStatus): void {
+  if (RANK[status] >= RANK[row.status]) row.status = status;
 }

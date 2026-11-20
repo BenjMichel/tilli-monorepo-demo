@@ -56,4 +56,8 @@ export type { Candidate } from './domain/candidate';
 export { CandidateId, MissionId } from './domain/ids';
 export { InMemoryCandidateRepository } from './infrastructure/in-memory-candidate-repository';
 export { InMemoryMissionRepository } from './infrastructure/in-memory-mission-repository';
+export { DISPATCH_MIGRATIONS } from './infrastructure/postgres/migrations';
+export { PostgresMissionRepository } from './infrastructure/postgres/postgres-mission-repository';
+export { PostgresWaveTimer, type WaveExpiry } from './infrastructure/postgres/postgres-wave-timer';
+export type { Migration, SqlDatabase } from './infrastructure/postgres/sql';
 export { StaticAreaLocator } from './infrastructure/static-area-locator';

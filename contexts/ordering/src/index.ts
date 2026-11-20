@@ -41,3 +41,6 @@ export { OrderId } from './domain/order';
 export { DEMO_PRICE_GRID, InMemoryPriceGrids } from './infrastructure/demo-price-grid';
 export { PARIS_SERVICE_AREA } from './infrastructure/demo-service-area';
 export { InMemoryOrderRepository } from './infrastructure/in-memory-order-repository';
+export { ORDERING_MIGRATIONS } from './infrastructure/postgres/migrations';
+export { PostgresOrderRepository } from './infrastructure/postgres/postgres-order-repository';
+export type { Migration, SqlDatabase } from './infrastructure/postgres/sql';

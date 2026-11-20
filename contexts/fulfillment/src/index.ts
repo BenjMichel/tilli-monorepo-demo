@@ -35,3 +35,9 @@ export {
   InMemoryInterventionDraftRepository,
   InMemoryInterventionRepository,
 } from './infrastructure/in-memory-repositories';
+export { FULFILLMENT_MIGRATIONS } from './infrastructure/postgres/migrations';
+export {
+  PostgresInterventionDraftRepository,
+  PostgresInterventionRepository,
+} from './infrastructure/postgres/postgres-repositories';
+export type { Migration, SqlDatabase } from './infrastructure/postgres/sql';

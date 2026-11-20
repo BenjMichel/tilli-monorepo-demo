@@ -5,6 +5,9 @@ import {
   createDispatchModule,
   InMemoryCandidateRepository,
   InMemoryMissionRepository,
+  type MissionId,
+  PostgresMissionRepository,
+  PostgresWaveTimer,
   StaticAreaLocator,
   type WaveTimer,
 } from '@tilli/dispatch';
@@ -13,9 +16,19 @@ import {
   createFulfillmentModule,
   InMemoryInterventionDraftRepository,
   InMemoryInterventionRepository,
+  PostgresInterventionDraftRepository,
+  PostgresInterventionRepository,
 } from '@tilli/fulfillment';
-import { createOrderingModule, InMemoryOrderRepository, InMemoryPriceGrids, PARIS_SERVICE_AREA } from '@tilli/ordering';
-import { OrderTrackingProjection } from './admin/order-tracking';
+import {
+  createOrderingModule,
+  InMemoryOrderRepository,
+  InMemoryPriceGrids,
+  PARIS_SERVICE_AREA,
+  PostgresOrderRepository,
+} from '@tilli/ordering';
+import { InMemoryOrderTrackingStore, OrderTrackingProjection } from './admin/order-tracking';
+import { PostgresOrderTrackingStore } from './admin/postgres-order-tracking-store';
+import type { SqlDatabase } from './infrastructure/postgres/database';
 import { SetTimeoutWaveTimer } from './infrastructure/set-timeout-wave-timer';
 
 type Clock = { now(): Date };
@@ -23,7 +36,15 @@ type Clock = { now(): Date };
 export type PlatformOptions = {
   readonly clock?: Clock;
   readonly candidates?: readonly Candidate[];
-  /** Defaults to a setTimeout timer that expires the wave and pumps the outboxes. */
+  /**
+   * Migrated PostgreSQL database (see `migrate`). Without it, everything lives in memory and
+   * is lost on restart. Tailor candidates stay in memory either way: they come from the seed (ADR 0005).
+   */
+  readonly database?: SqlDatabase;
+  /**
+   * Defaults to a setTimeout timer in memory, and to the `dispatch.wave_timers` table with a
+   * database: `fireDueWaves` must then be polled. Either way, the wave expires and the outboxes are pumped.
+   */
   readonly timer?: WaveTimer;
   readonly waveSizes?: readonly number[];
   readonly waveDurationMs?: number;
@@ -46,18 +67,20 @@ const ALL_EVENTS: IntegrationEventKey[] = [
 export function createPlatform(options: PlatformOptions = {}) {
   const clock = options.clock ?? { now: () => new Date() };
   const bus = new InMemoryEventBus();
-  const tracking = new OrderTrackingProjection();
-
-  const defaultTimer = new SetTimeoutWaveTimer(
-    () => clock.now(),
-    async ({ missionId, wave }) => {
-      await dispatch.commands.expireWave.execute({ missionId, wave });
-      await pump();
-    },
+  const db = options.database;
+  const tracking = new OrderTrackingProjection(
+    db ? new PostgresOrderTrackingStore(db) : new InMemoryOrderTrackingStore(),
   );
 
+  const expireWave = async ({ missionId, wave }: { missionId: MissionId; wave: number }) => {
+    await dispatch.commands.expireWave.execute({ missionId, wave });
+    await pump();
+  };
+  const memoryTimer = new SetTimeoutWaveTimer(() => clock.now(), expireWave);
+  const databaseTimer = db ? new PostgresWaveTimer(db) : null;
+
   const ordering = createOrderingModule({
-    orders: new InMemoryOrderRepository(clock),
+    orders: db ? new PostgresOrderRepository(db, clock) : new InMemoryOrderRepository(clock),
     grids: new InMemoryPriceGrids(),
     serviceArea: PARIS_SERVICE_AREA,
     ids: { next: () => randomUUID() },
@@ -65,18 +88,18 @@ export function createPlatform(options: PlatformOptions = {}) {
     publisher: bus,
   });
   const dispatch = createDispatchModule({
-    missions: new InMemoryMissionRepository(clock),
+    missions: db ? new PostgresMissionRepository(db, clock) : new InMemoryMissionRepository(clock),
     candidates: new InMemoryCandidateRepository(options.candidates ?? []),
     areas: new StaticAreaLocator(),
     publisher: bus,
-    timer: options.timer ?? defaultTimer,
+    timer: options.timer ?? databaseTimer ?? memoryTimer,
     clock,
     waveSizes: options.waveSizes ?? [3, 5, Infinity],
     waveDurationMs: options.waveDurationMs ?? 30 * 60_000,
   });
   const fulfillment = createFulfillmentModule({
-    interventions: new InMemoryInterventionRepository(clock),
-    drafts: new InMemoryInterventionDraftRepository(),
+    interventions: db ? new PostgresInterventionRepository(db, clock) : new InMemoryInterventionRepository(clock),
+    drafts: db ? new PostgresInterventionDraftRepository(db) : new InMemoryInterventionDraftRepository(),
     clock,
     publisher: bus,
   });
@@ -114,6 +137,14 @@ export function createPlatform(options: PlatformOptions = {}) {
     return queue;
   }
 
+  /** Expires the waves whose deadline passed, when the timers live in the database. */
+  async function fireDueWaves(): Promise<number> {
+    if (!databaseTimer || options.timer) return 0;
+    return databaseTimer.fireDue(clock.now(), expireWave, (expiry, error) =>
+      console.warn(`[wave-timer] ${expiry.missionId} wave ${expiry.wave}`, error),
+    );
+  }
+
   return {
     clock,
     bus,
@@ -122,7 +153,8 @@ export function createPlatform(options: PlatformOptions = {}) {
     fulfillment,
     tracking,
     pump,
-    stop: () => defaultTimer.stop(),
+    fireDueWaves,
+    stop: () => memoryTimer.stop(),
   };
 }
 

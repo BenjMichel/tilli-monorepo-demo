@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import type { PendingOffer, TailorApi } from './api';
+import { MotionPressable } from './motion';
 import {
   appointmentStarts,
   describeError,
@@ -119,7 +120,7 @@ function OfferCard({
               const iso = start.toISOString();
               const selected = picked === iso;
               return (
-                <Pressable
+                <MotionPressable
                   key={iso}
                   role="radio"
                   aria-checked={selected}
@@ -128,7 +129,7 @@ function OfferCard({
                   style={[styles.time, selected && styles.timeSelected]}
                 >
                   <Text style={selected ? styles.timeLabelSelected : styles.timeLabel}>{formatTime(start)}</Text>
-                </Pressable>
+                </MotionPressable>
               );
             })}
           </View>

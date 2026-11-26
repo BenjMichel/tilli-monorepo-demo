@@ -1,0 +1,62 @@
+/* Stable keys keep polling from replaying feedback on unchanged orders. */
+@media (prefers-reduced-motion: no-preference) {
+  .button,
+  .filter {
+    transition:
+      transform 160ms ease-out,
+      background-color 160ms ease,
+      border-color 160ms ease,
+      box-shadow 160ms ease;
+  }
+  .button:not(:disabled):active,
+  .filter:active {
+    transform: scale(0.97);
+  }
+  .filter__count {
+    display: inline-block;
+    animation: count-settle 240ms ease-out;
+  }
+  .badge {
+    animation: status-settle 220ms ease-out;
+  }
+  .cancel {
+    animation: detail-arrive 180ms ease-out;
+  }
+  .cancel__field input {
+    transition: border-color 160ms ease;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .button:not(:disabled):hover,
+    .filter:hover {
+      box-shadow: 0 2px 6px rgb(0 0 0 / 10%);
+    }
+  }
+}
+@keyframes count-settle {
+  from {
+    transform: scale(0.9);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+@keyframes status-settle {
+  from {
+    opacity: 0.65;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes detail-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

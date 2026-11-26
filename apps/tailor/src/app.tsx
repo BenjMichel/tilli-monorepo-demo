@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { type ComponentProps, useState } from 'react';
+import { ScrollView, Text, View } from 'react-native';
 import type { TailorApi } from './api';
 import { InterventionsScreen } from './interventions-screen';
+import { MotionPressable, MotionProvider } from './motion';
 import { OffersScreen } from './offers-screen';
 import { Button, type Palette, useStyles } from './theme';
 
@@ -10,7 +11,15 @@ export const DEMO_TAILORS = ['marie', 'karim', 'sofia', 'lucas'] as const;
 
 type Tab = 'offers' | 'interventions';
 
-export function App({
+export function App(props: ComponentProps<typeof AppContent>) {
+  return (
+    <MotionProvider>
+      <AppContent {...props} />
+    </MotionProvider>
+  );
+}
+
+function AppContent({
   api,
   refreshMs = 5_000,
   now = () => new Date(),
@@ -83,9 +92,14 @@ export function App({
 function TabButton({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
   const styles = useStyles(appStyles);
   return (
-    <Pressable role="tab" aria-selected={active} onPress={onPress} style={[styles.tab, active && styles.tabActive]}>
+    <MotionPressable
+      role="tab"
+      aria-selected={active}
+      onPress={onPress}
+      style={[styles.tab, active && styles.tabActive]}
+    >
       <Text style={active ? styles.tabLabelActive : styles.tabLabel}>{label}</Text>
-    </Pressable>
+    </MotionPressable>
   );
 }
 

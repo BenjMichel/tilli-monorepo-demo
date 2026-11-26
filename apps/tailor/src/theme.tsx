@@ -1,5 +1,7 @@
 import { type ReactNode, useMemo } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, useColorScheme, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, useColorScheme, View } from 'react-native';
+
+import { MotionPressable, MotionView } from './motion';
 
 /* The site's atelier palette: chalk paper, ink, and the red of a basting thread. */
 const LIGHT = {
@@ -73,7 +75,7 @@ export function Button({
   const palette = usePalette();
   const primary = variant === 'primary';
   return (
-    <Pressable
+    <MotionPressable
       role="button"
       aria-label={accessibilityLabel ?? label}
       aria-disabled={disabled || busy}
@@ -88,7 +90,7 @@ export function Button({
     >
       {busy && <ActivityIndicator size="small" color={primary ? palette.onThread : palette.thread} />}
       <Text style={primary ? styles.primaryLabel : styles.ghostLabel}>{label}</Text>
-    </Pressable>
+    </MotionPressable>
   );
 }
 
@@ -126,7 +128,7 @@ export function Badge({ label, tone }: { label: string; tone: Tone }) {
 
 export function Card({ children }: { children: ReactNode }) {
   const styles = useStyles(cardStyles);
-  return <View style={styles.card}>{children}</View>;
+  return <MotionView style={styles.card}>{children}</MotionView>;
 }
 
 const cardStyles = (c: Palette) => ({

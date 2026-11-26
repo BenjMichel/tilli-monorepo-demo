@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { type CartItem, fabricLabel, formatEuros, garmentLabel } from './funnel';
+import { GarmentIcon } from './garment-icon';
 import type { QuoteState } from './use-quote';
 
 /** The cart and its quote. Prices come from the API quote, never from the catalog shown earlier. */
@@ -19,9 +20,18 @@ export function CartSummary({
 
   return (
     <aside className="summary" aria-label="Votre panier">
-      <h2 className="summary__title">Votre panier</h2>
+      <div className="summary__heading">
+        <h2 className="summary__title">Votre panier</h2>
+        <span className="summary__count" aria-hidden="true">
+          {cart.length}
+        </span>
+      </div>
       {cart.length === 0 ? (
-        <p className="muted">Ajoutez un premier vêtement pour voir le prix.</p>
+        <div className="summary__empty">
+          <GarmentIcon type="dress" />
+          <p>Un peu d’amour pour votre dressing.</p>
+          <p className="muted">Ajoutez un premier vêtement pour voir le prix.</p>
+        </div>
       ) : (
         <ul className="summary__items">
           {cart.map((item, index) => (

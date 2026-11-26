@@ -2,6 +2,7 @@ import { useEffect, useId, useState } from 'react';
 import type { Fabric, OfferedAlteration, TilliApi } from './api';
 import { CartSummary } from './cart-summary';
 import { type CartItem, describeError, FABRICS, formatEuros, GARMENTS } from './funnel';
+import { GarmentIcon } from './garment-icon';
 import type { QuoteState } from './use-quote';
 
 type Catalog =
@@ -63,7 +64,7 @@ export function ItemsStep({
   return (
     <div className="layout">
       <section className="panel" aria-labelledby={`${ids}-title`}>
-        <h1 id={`${ids}-title`} className="panel__title">
+        <h1 id={`${ids}-title`} className="panel__title" tabIndex={-1}>
           Que faut-il retoucher ?
         </h1>
         <p className="panel__lead">Le prix est fixé d’avance, selon le vêtement, sa matière et la retouche.</p>
@@ -80,7 +81,10 @@ export function ItemsStep({
                   checked={garmentType === garment.type}
                   onChange={() => setGarmentType(garment.type)}
                 />
-                <span>{garment.label}</span>
+                <span>
+                  <GarmentIcon type={garment.type} />
+                  {garment.label}
+                </span>
               </label>
             ))}
           </div>

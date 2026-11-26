@@ -81,6 +81,7 @@ describe('the website funnel', () => {
     render(<App api={api} now={NOW} />);
 
     await fillCartAndContinue(user);
+    expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Où et quand passer ?' }));
     await fillDetails(user);
     await user.click(screen.getByRole('button', { name: 'Commander' }));
 

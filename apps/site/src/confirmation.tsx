@@ -4,7 +4,7 @@ import { formatEuros } from './funnel';
 export function Confirmation({ placed, onRestart }: { placed: PlacedOrder; onRestart: () => void }) {
   return (
     <section className="panel confirmation" aria-labelledby="confirmation-title">
-      <h1 id="confirmation-title" className="panel__title">
+      <h1 id="confirmation-title" className="panel__title" tabIndex={-1}>
         Commande enregistrée
       </h1>
       <p className="panel__lead">

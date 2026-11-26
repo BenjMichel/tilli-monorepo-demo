@@ -77,7 +77,7 @@ function OrderRow({ api, row, onChanged }: { api: AdminApi; row: OrderTrackingRo
         </td>
         <td>{formatDateTime(row.placedAt)}</td>
         <td>
-          <span className="badge" data-tone={status.tone}>
+          <span key={row.status} className="badge" data-tone={status.tone}>
             {status.label}
           </span>
         </td>

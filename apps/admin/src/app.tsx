@@ -84,7 +84,9 @@ function FilterButton({
 }) {
   return (
     <button type="button" className="filter" data-tone={tone} aria-pressed={active} onClick={onClick}>
-      <span className="filter__count">{count}</span>
+      <span key={count} className="filter__count">
+        {count}
+      </span>
       <span className="filter__label">{label}</span>
     </button>
   );

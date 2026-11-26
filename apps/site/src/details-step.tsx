@@ -84,7 +84,7 @@ export function DetailsStep({
   return (
     <form className="layout" onSubmit={submit}>
       <section className="panel" aria-labelledby={`${ids}-title`}>
-        <h1 id={`${ids}-title`} className="panel__title">
+        <h1 id={`${ids}-title`} className="panel__title" tabIndex={-1}>
           Où et quand passer ?
         </h1>
         <p className="panel__lead">

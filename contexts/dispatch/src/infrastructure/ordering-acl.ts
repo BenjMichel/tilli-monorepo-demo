@@ -11,13 +11,6 @@ export interface AreaLocator {
   locate(postalCode: string): GeoPoint | null;
 }
 
-export class UnknownArea extends Error {
-  constructor(postalCode: string) {
-    super(`No known location for postal code ${postalCode}`);
-    this.name = 'UnknownArea';
-  }
-}
-
 /**
  * Anti-corruption layer facing Ordering. It validates the published events, keeps only
  * what Dispatch needs to decide, and drops the rest: street, customer identity, prices.
@@ -31,8 +24,8 @@ export class OrderingAcl {
 
   readonly onOrderPlaced = async (raw: unknown): Promise<void> => {
     const { payload } = OrderPlacedV1.parse(raw);
+    // Throwing here would block the Ordering outbox for good: an unknown area is a business outcome.
     const location = this.areas.locate(payload.address.postalCode);
-    if (!location) throw new UnknownArea(payload.address.postalCode);
 
     await this.openMission.execute({
       orderId: OrderId(payload.orderId),

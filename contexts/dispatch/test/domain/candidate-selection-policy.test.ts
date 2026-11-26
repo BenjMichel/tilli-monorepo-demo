@@ -26,6 +26,13 @@ describe('CandidateSelectionPolicy', () => {
       expect(selected).toEqual(ids('versailles-long-radius'));
     });
 
+    it('finds nobody in range of an area it cannot locate', () => {
+      const requirements = someRequirements({ area: { postalCode: '75099', location: null } });
+      const selected = policy.selectWave(request([aCandidate('anywhere', { radiusKm: 1000 })], { requirements }));
+
+      expect(selected).toEqual([]);
+    });
+
     it('requires every garment type and every fabric of the mission', () => {
       const selected = policy.selectWave(
         request(

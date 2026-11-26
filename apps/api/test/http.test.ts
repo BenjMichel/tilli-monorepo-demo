@@ -44,12 +44,16 @@ function anApi() {
     setNow: (date: string) => {
       now = new Date(date);
     },
-    placeOrder: async () => {
+    placeOrder: async (postalCode = order.address.postalCode) => {
       const quote = await app.inject({ method: 'POST', url: '/quotes', payload: { items: order.items } });
       const placed = await app.inject({
         method: 'POST',
         url: '/orders',
-        payload: { ...order, quotedPriceGridVersion: quote.json().priceGridVersion },
+        payload: {
+          ...order,
+          address: { ...order.address, postalCode },
+          quotedPriceGridVersion: quote.json().priceGridVersion,
+        },
       });
       return placed.json() as { orderId: string; totalCents: number };
     },
@@ -160,6 +164,16 @@ describe('Tilli demo API', () => {
     });
     expect(versailles.statusCode).toBe(422);
     expect(versailles.json().error).toBe('AREA_NOT_SERVED');
+  });
+
+  it('offers an order in any district Ordering serves, and tracks it in the admin', async () => {
+    const api = anApi();
+    const { orderId } = await api.placeOrder('75001');
+
+    expect((await api.app.inject({ url: '/tailors/marie/offers' })).json()).toMatchObject([{ postalCode: '75001' }]);
+    expect((await api.app.inject({ url: '/admin/orders' })).json()).toMatchObject([
+      { orderId, status: 'searching-tailor' },
+    ]);
   });
 
   it('cancels an order before any tailor accepts: offers disappear and admin shows it cancelled', async () => {

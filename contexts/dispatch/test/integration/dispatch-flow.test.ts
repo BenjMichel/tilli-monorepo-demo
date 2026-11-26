@@ -199,13 +199,25 @@ describe('Dispatch, driven by integration events', () => {
     expect(app.bus.published.map((event) => event.type)).toEqual(['OrderPlaced', 'OrderCancelled']);
   });
 
-  it('refuses an order outside the known areas, and a malformed event', async () => {
+  it('declares an order it cannot locate unstaffed at once, instead of blocking the Ordering outbox', async () => {
     const app = aRunningDispatch();
     const unknownArea = orderPlaced({
       address: { street: '1 place d’Armes', postalCode: '78000', city: 'Versailles' },
     });
 
-    await expect(app.bus.publish(unknownArea)).rejects.toThrow('No known location for postal code 78000');
+    await app.bus.publish(unknownArea);
+    await app.dispatch.relay.run();
+
+    expect(await app.status()).toBe('unstaffed');
+    expect(app.scheduled).toEqual([]);
+    const [unstaffed] = app.publishedBy('MissionUnstaffed');
+    expect(IntegrationEvent.parse(unstaffed)).toMatchObject({
+      payload: { missionId: 'mission-o-1', orderId: 'o-1', waves: 0 },
+    });
+  });
+
+  it('refuses a malformed event', async () => {
+    const app = aRunningDispatch();
     await expect(app.dispatch.subscriptions['OrderPlaced.v1']({ ...orderPlaced(), payload: {} })).rejects.toThrow();
   });
 });

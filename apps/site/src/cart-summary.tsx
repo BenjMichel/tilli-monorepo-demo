@@ -22,7 +22,7 @@ export function CartSummary({
     <aside className="summary" aria-label="Votre panier">
       <div className="summary__heading">
         <h2 className="summary__title">Votre panier</h2>
-        <span className="summary__count" aria-hidden="true">
+        <span key={cart.length} className="summary__count" aria-hidden="true">
           {cart.length}
         </span>
       </div>

@@ -50,6 +50,7 @@ export class CandidateSelectionPolicy {
 }
 
 function score(candidate: Candidate, requirements: MissionRequirements): ScoredCandidate | null {
+  if (requirements.area.location === null) return null;
   const distance = distanceKm(candidate.base, requirements.area.location);
   if (distance > candidate.radiusKm) return null;
 

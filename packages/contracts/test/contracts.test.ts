@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { IntegrationEvent, keyOf, OrderPlacedV1 } from '../src';
+import { IntegrationEvent, keyOf, MissionUnstaffedV1, OrderPlacedV1 } from '../src';
 
 const anOrderPlaced = {
   eventId: 'evt-1',
@@ -41,5 +41,17 @@ describe('integration event contracts', () => {
 
   it('rejects another version of the same event type', () => {
     expect(OrderPlacedV1.safeParse({ ...anOrderPlaced, version: 2 }).success).toBe(false);
+  });
+
+  it('accepts a mission unstaffed before any wave, when no tailor could be solicited', () => {
+    const unstaffed = (waves: number) => ({
+      eventId: 'evt-2',
+      type: 'MissionUnstaffed',
+      version: 1,
+      occurredAt: '2026-11-09T10:00:00Z',
+      payload: { missionId: 'mission-o-1', orderId: 'o-1', waves },
+    });
+    expect(MissionUnstaffedV1.safeParse(unstaffed(0)).success).toBe(true);
+    expect(MissionUnstaffedV1.safeParse(unstaffed(-1)).success).toBe(false);
   });
 });

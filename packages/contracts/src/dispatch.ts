@@ -20,7 +20,8 @@ export const MissionUnstaffedV1 = eventSchema(
   z.object({
     missionId: z.string().min(1),
     orderId: z.string().min(1),
-    waves: z.int().positive(),
+    /** Waves sent before giving up; 0 when no tailor could be solicited at all. */
+    waves: z.int().nonnegative(),
   }),
 );
 export type MissionUnstaffedV1 = z.infer<typeof MissionUnstaffedV1>;

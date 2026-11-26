@@ -6,10 +6,11 @@ export type Fabric = 'basic' | 'dressy';
 
 /**
  * What a tailor needs to take the mission. The area is the postal code and its
- * centroid: Dispatch never stores the customer's address.
+ * centroid: Dispatch never stores the customer's address. Without a known centroid,
+ * no tailor is in range and the mission ends unstaffed, in front of the ops team.
  */
 export type MissionRequirements = {
-  readonly area: { readonly postalCode: string; readonly location: GeoPoint };
+  readonly area: { readonly postalCode: string; readonly location: GeoPoint | null };
   readonly slots: readonly TimeSlot[];
   readonly garmentTypes: readonly GarmentType[];
   readonly fabrics: readonly Fabric[];
@@ -23,7 +24,10 @@ export function MissionRequirements(requirements: MissionRequirements): MissionR
 
 export function copyRequirements(requirements: MissionRequirements): MissionRequirements {
   return {
-    area: { postalCode: requirements.area.postalCode, location: { ...requirements.area.location } },
+    area: {
+      postalCode: requirements.area.postalCode,
+      location: requirements.area.location && { ...requirements.area.location },
+    },
     slots: requirements.slots.map(copyTimeSlot),
     garmentTypes: [...new Set(requirements.garmentTypes)],
     fabrics: [...new Set(requirements.fabrics)],
